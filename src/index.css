@@ -48,18 +48,36 @@
   animation: scanline 2.5s ease-in-out infinite;
 }
 
-/* Print styles for spine labels */
+/* Print styles for professional archive index and labels */
 @media print {
   body * {
-    visibility: hidden;
+    visibility: hidden !important;
   }
-  #printable-spine-label, #printable-spine-label * {
-    visibility: visible;
+
+  #printable-content,
+  #printable-content * {
+    visibility: visible !important;
   }
-  #printable-spine-label {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
+
+  #printable-content {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    box-shadow: none !important;
+  }
+
+  @page {
+    size: auto;
+    margin: 8mm 10mm;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 }

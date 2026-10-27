@@ -297,16 +297,31 @@ export default function ChaptersHierarchyView({
                     <span className="text-slate-600">
                       يحتوي: <strong className="text-slate-900 font-bold">{sepsCount}</strong> فواصل
                     </span>
-                    {isSelected ? (
-                      <span className="text-blue-700 font-black flex items-center gap-1">
-                        <Check className="w-3.5 h-3.5 stroke-[3]" />
-                        <span>مفتوح أدناه</span>
-                      </span>
-                    ) : (
-                      <span className="text-slate-400 group-hover:text-blue-600">
-                        فتح المجلد ←
-                      </span>
-                    )}
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenPrintModal(b);
+                        }}
+                        title="طباعة فهرس المجلد وملصق الكعب"
+                        className="p-1 rounded text-slate-400 hover:text-slate-900 hover:bg-slate-200 transition-colors cursor-pointer"
+                      >
+                        <Printer className="w-3.5 h-3.5" />
+                      </button>
+
+                      {isSelected ? (
+                        <span className="text-blue-700 font-black flex items-center gap-1">
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                          <span>مفتوح</span>
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 group-hover:text-blue-600">
+                          فتح ←
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -454,6 +469,18 @@ export default function ChaptersHierarchyView({
                   <LayoutGrid className="w-4 h-4" />
                 </button>
               </div>
+
+              {/* Print Binder Index & Spine button */}
+              <button
+                type="button"
+                id="print-active-binder-index-btn"
+                onClick={() => onOpenPrintModal(activeBinder)}
+                title="طباعة فهرس محتويات المجلد وملصق الكعب"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold shadow-xs transition-colors cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5 text-blue-400" />
+                <span>طباعة فهرس المجلد</span>
+              </button>
 
               {/* Add Separator button */}
               <button

@@ -54,6 +54,7 @@ export default function App() {
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [targetCheckoutItem, setTargetCheckoutItem] = useState(null);
   const [targetQRItem, setTargetQRItem] = useState(null);
+  const [targetPrintItem, setTargetPrintItem] = useState(null);
 
   // Initialize live 2-way subscriptions to Firebase
   useEffect(() => {
@@ -140,9 +141,9 @@ export default function App() {
     setIsQRModalOpen(true);
   };
 
-  // Open Print Spine/Tab modal
+  // Open Print Spine/Tab/Index modal
   const handleOpenPrintModal = (item = null) => {
-    setTargetQRItem(item || separators[0] || binders[0]);
+    setTargetPrintItem(item || binders[0] || separators[0]);
     setIsPrintModalOpen(true);
   };
 
@@ -370,8 +371,10 @@ export default function App() {
       <SpineLabelModal
         isOpen={isPrintModalOpen}
         onClose={() => setIsPrintModalOpen(false)}
-        binder={binders[0]}
-        document={targetQRItem}
+        targetItem={targetPrintItem}
+        binders={binders}
+        separators={separators}
+        chapters={chapters}
       />
 
     </div>
