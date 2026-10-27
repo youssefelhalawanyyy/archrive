@@ -2,15 +2,40 @@
 <html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230267b5'><path d='M4 4v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.342a2 2 0 0 0-.602-1.43l-4.44-4.342A2 2 0 0 0 13.56 2H6a2 2 0 0 0-2 2z'/></svg>" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
     <title>شركة المستقبل | نظام أرشفة الملفات والأرشيف الورقي الذكي</title>
     <meta name="description" content="نظام إدارة وأرشفة الملفات والوثائق الورقية والمجلدات والخزائن - شركة المستقبل" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    
+    <!-- Theme & Status Bar Colors -->
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="msapplication-TileColor" content="#0f172a" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    
+    <!-- iOS / Safari PWA Capabilities -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="الأرشيف الذكي" />
+    <meta name="application-name" content="الأرشيف الذكي" />
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate icon" type="image/png" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/icons/icon.svg" color="#0f172a" />
+    
+    <!-- Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
   </head>
-  <body class="bg-slate-50 text-slate-800 font-cairo antialiased selection:bg-brand-500 selection:text-white">
+  <body class="bg-slate-50 text-slate-800 font-cairo antialiased selection:bg-blue-600 selection:text-white overflow-x-hidden min-h-screen">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

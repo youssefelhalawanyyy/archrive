@@ -6,14 +6,18 @@ import {
   FilePlus2, 
   FileText, 
   Boxes, 
-  Building2
+  Building2,
+  X,
+  Archive
 } from 'lucide-react';
 
 export default function Sidebar({ 
   currentTab, 
   setCurrentTab, 
   onOpenAddModal, 
-  stats = { totalDocs: 0, checkedOutCount: 0, availableCount: 0, bindersCount: 5, chaptersCount: 5 } 
+  stats = { totalDocs: 0, checkedOutCount: 0, availableCount: 0, bindersCount: 5, chaptersCount: 5 },
+  isOpenMobile = false,
+  onCloseMobile = null
 }) {
   const menuItems = [
     {
@@ -47,16 +51,23 @@ export default function Sidebar({
     }
   ];
 
-  return (
-    <aside className="w-64 bg-white border-l border-slate-200 flex flex-col justify-between shrink-0 shadow-2xs font-cairo select-none">
+  const handleSelectTab = (tabId) => {
+    setCurrentTab(tabId);
+    if (onCloseMobile) onCloseMobile();
+  };
+
+  const sidebarContent = (
+    <>
       <div className="p-4">
-        
         {/* Quick CTA to Add Separator */}
         <button
           type="button"
           id="sidebar-add-doc-cta"
-          onClick={onOpenAddModal}
-          className="w-full mb-5 flex items-center justify-center gap-2 px-4 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-black transition-all shadow-sm cursor-pointer group"
+          onClick={() => {
+            onOpenAddModal();
+            if (onCloseMobile) onCloseMobile();
+          }}
+          className="w-full mb-5 flex items-center justify-center gap-2 px-4 py-3 bg-slate-900 hover:bg-slate-800 active:scale-98 text-white rounded-xl text-sm font-black transition-all shadow-sm cursor-pointer group"
         >
           <FilePlus2 className="w-4 h-4 text-blue-400 group-hover:scale-110 transition-transform" />
           <span>+ إضافة فاصل كرتوني</span>
@@ -68,7 +79,7 @@ export default function Sidebar({
         </div>
 
         {/* Navigation Links */}
-        <nav className="space-y-1.5" aria-label="شريط التنقل الجانبي">
+        <nav className="space-y-1.5" aria-label="شريط التنقل">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentTab === item.id;
@@ -78,10 +89,10 @@ export default function Sidebar({
                 key={item.id}
                 type="button"
                 id={`sidebar-nav-${item.id}`}
-                onClick={() => setCurrentTab(item.id)}
+                onClick={() => handleSelectTab(item.id)}
                 className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-blue-50/80 text-blue-950 font-black border-r-4 border-blue-600 shadow-2xs'
+                    ? 'bg-blue-50/90 text-blue-950 font-black border-r-4 border-blue-600 shadow-2xs'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-bold'
                 }`}
               >
@@ -133,6 +144,55 @@ export default function Sidebar({
           </div>
         </div>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* 1. Desktop Persistent Sidebar */}
+      <aside className="hidden md:flex flex-col w-64 bg-white border-l border-slate-200 justify-between shrink-0 shadow-2xs font-cairo select-none">
+        {sidebarContent}
+      </aside>
+
+      {/* 2. Mobile Drawer Overlay */}
+      {isOpenMobile && (
+        <div 
+          className="md:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex justify-start animate-in fade-in font-cairo"
+          onClick={onCloseMobile}
+        >
+          <div 
+            className="w-72 max-w-[85vw] bg-white h-full shadow-2xl flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Drawer Header */}
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+                  <Archive className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-white">الأرشيف الذكي</h3>
+                  <p className="text-[10px] text-blue-200">شركة المستقبل</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={onCloseMobile}
+                className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                aria-label="إغلاق القائمة"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 flex flex-col justify-between">
+              {sidebarContent}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

@@ -1,0 +1,89 @@
+{
+  "id": "/",
+  "name": "الأرشيف الذكي • شركة المستقبل",
+  "short_name": "الأرشيف الذكي",
+  "description": "نظام إدارة وأرشفة الملفات والوثائق الورقية والمجلدات والخزائن - شركة المستقبل",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "any",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f172a",
+  "dir": "rtl",
+  "lang": "ar",
+  "categories": [
+    "business",
+    "productivity",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "الموضوعات والأرشيف",
+      "short_name": "الموضوعات",
+      "description": "تصفح الفصول السبعة والمجلدات والفواصل",
+      "url": "/?tab=hierarchy",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "سجل الفواصل العام",
+      "short_name": "سجل الفواصل",
+      "description": "البحث في جميع الفواصل الكرتونية والمجلدات",
+      "url": "/?tab=dashboard",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "المجلدات النشطة",
+      "short_name": "المجلدات",
+      "description": "عرض سعة المجلدات والأرفف الفيزيائية",
+      "url": "/?tab=binders",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false
+}

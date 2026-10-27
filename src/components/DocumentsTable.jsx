@@ -76,7 +76,7 @@ export default function DocumentsTable({
               سجل الفواصل والتبويبات المودعة بالمجلدات
             </h3>
             <span className="text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
-              {filteredSeparators.length} فاصل كرتوني
+              {filteredSeparators.length} فاصل
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -89,7 +89,7 @@ export default function DocumentsTable({
           <button
             type="button"
             onClick={() => { setStatusFilter('all'); setCurrentPage(1); }}
-            className={`px-3 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded text-xs font-bold transition-all cursor-pointer ${
               statusFilter === 'all' 
                 ? 'bg-white text-slate-900 shadow-2xs' 
                 : 'text-slate-600 hover:text-slate-900'
@@ -100,10 +100,10 @@ export default function DocumentsTable({
           <button
             type="button"
             onClick={() => { setStatusFilter('available'); setCurrentPage(1); }}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               statusFilter === 'available' 
-                ? 'bg-emerald-600 text-white shadow-2xs' 
-                : 'text-slate-600 hover:text-emerald-700'
+                ? 'bg-emerald-700 text-white shadow-2xs' 
+                : 'text-emerald-800 hover:bg-emerald-50'
             }`}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
@@ -112,10 +112,10 @@ export default function DocumentsTable({
           <button
             type="button"
             onClick={() => { setStatusFilter('checked_out'); setCurrentPage(1); }}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               statusFilter === 'checked_out' 
-                ? 'bg-amber-600 text-white shadow-2xs' 
-                : 'text-slate-600 hover:text-amber-800'
+                ? 'bg-amber-700 text-white shadow-2xs' 
+                : 'text-amber-800 hover:bg-amber-50'
             }`}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-amber-300"></span>
@@ -125,8 +125,110 @@ export default function DocumentsTable({
 
       </div>
 
-      {/* Responsive Table */}
-      <div className="overflow-x-auto">
+      {/* 1. Mobile Touch Cards View (< md) */}
+      <div className="block md:hidden divide-y divide-slate-100">
+        {paginatedItems.length > 0 ? (
+          paginatedItems.map((sep) => {
+            const isAvailable = sep.status === 'available';
+
+            return (
+              <div key={sep.id} className="p-4 hover:bg-slate-50 transition-colors">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <span 
+                      className="w-3 h-3 rounded-full shrink-0" 
+                      style={{ backgroundColor: sep.color || '#38bdf8' }}
+                    />
+                    <span className="font-mono font-bold text-xs bg-slate-900 text-white px-2 py-0.5 rounded shadow-2xs">
+                      {sep.code}
+                    </span>
+                  </div>
+
+                  {/* Status Toggle Button */}
+                  <button
+                    type="button"
+                    onClick={() => onToggleStatus(sep)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold border transition-colors cursor-pointer active:scale-95 ${
+                      isAvailable
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                        : 'bg-amber-50 text-amber-800 border-amber-200'
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${isAvailable ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                    <span>{isAvailable ? '🟢 متاح' : '🟡 مستعار'}</span>
+                  </button>
+                </div>
+
+                <div className="mt-2.5">
+                  <h4 className="text-sm font-bold text-slate-900">
+                    {sep.name}
+                  </h4>
+                  {sep.description && (
+                    <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">
+                      {sep.description}
+                    </p>
+                  )}
+                </div>
+
+                <div className="mt-2.5 flex flex-wrap items-center gap-2 text-xs">
+                  <span className="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                    {sep.binderName || sep.binderCode}
+                  </span>
+
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-50 text-blue-800 font-bold border border-blue-200">
+                    <MapPin className="w-3 h-3 text-blue-600" />
+                    <span>{sep.location || 'الخزانة الرئيسية'}</span>
+                  </span>
+
+                  <span className="text-slate-500 font-mono">
+                    <strong>{sep.papersCount || 20}</strong> ورقة
+                  </span>
+                </div>
+
+                {/* Mobile Quick Action Buttons */}
+                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onOpenQRModal(sep)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      <QrCode className="w-3.5 h-3.5 text-blue-600" />
+                      <span>كود QR</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => onOpenPrintModal(sep)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                      <span>طباعة</span>
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => onDeleteSeparator(sep.id)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                    title="حذف الفاصل"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="py-10 text-center text-slate-500">
+            <AlertCircle className="w-8 h-8 text-slate-400 mx-auto mb-1.5" />
+            <p className="text-xs font-bold text-slate-700">لم يتم العثور على فواصل مطابقة</p>
+          </div>
+        )}
+      </div>
+
+      {/* 2. Desktop High-Density Table (>= md) */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-right text-sm">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold text-xs uppercase tracking-wider">
@@ -188,7 +290,7 @@ export default function DocumentsTable({
                     <td className="py-3.5 px-4 whitespace-nowrap">
                       <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 text-xs font-bold border border-slate-200">
                         <MapPin className="w-3.5 h-3.5 text-blue-600" />
-                        <span>{sep.location || `${sep.cabinet || 'خزانة أ'} - ${sep.shelf || 'رف 3'}`}</span>
+                        <span>{sep.location || `${sep.cabinet || 'الخزانة الرئيسية'} - ${sep.shelf || 'رف 1'}`}</span>
                       </div>
                     </td>
 
@@ -280,7 +382,7 @@ export default function DocumentsTable({
               type="button"
               disabled={currentPage === 1}
               onClick={() => handlePageChange(currentPage - 1)}
-              className="p-1 rounded border border-slate-200 hover:bg-slate-50 disabled:opacity-40 transition-colors"
+              className="p-1 rounded border border-slate-200 hover:bg-slate-50 disabled:opacity-40 transition-colors cursor-pointer"
             >
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
@@ -293,7 +395,7 @@ export default function DocumentsTable({
               type="button"
               disabled={currentPage === totalPages}
               onClick={() => handlePageChange(currentPage + 1)}
-              className="p-1 rounded border border-slate-200 hover:bg-slate-50 disabled:opacity-40 transition-colors"
+              className="p-1 rounded border border-slate-200 hover:bg-slate-50 disabled:opacity-40 transition-colors cursor-pointer"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
             </button>

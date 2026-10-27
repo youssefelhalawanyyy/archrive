@@ -3,12 +3,35 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --sat: env(safe-area-inset-top, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+  }
+
   * {
     border-color: #e2e8f0;
+    -webkit-tap-highlight-color: transparent;
   }
+
+  html {
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     direction: rtl;
     text-align: right;
+    padding-top: var(--sat);
+    padding-left: var(--sal);
+    padding-right: var(--sar);
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: none;
+  }
+
+  button, a, input, select, textarea {
+    touch-action: manipulation;
   }
 }
 
@@ -46,6 +69,25 @@
 
 .animate-scanline {
   animation: scanline 2.5s ease-in-out infinite;
+}
+
+/* PWA Desktop Window Controls Support */
+@media all and (display-mode: standalone) {
+  .pwa-draggable-header {
+    -webkit-app-region: drag;
+  }
+  .pwa-no-drag {
+    -webkit-app-region: no-drag;
+  }
+}
+
+/* Safe area padding utilities for mobile phones */
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
+}
+
+.pt-safe {
+  padding-top: max(0.75rem, env(safe-area-inset-top, 0.75rem));
 }
 
 /* Print styles for professional archive index and labels */

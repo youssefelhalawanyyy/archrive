@@ -39,7 +39,9 @@ export default function ChaptersHierarchyView({
   const [selectedBinderId, setSelectedBinderId] = useState(null);
   const [localSearch, setLocalSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'available', 'checked_out'
-  const [viewMode, setViewMode] = useState('table'); // 'table' or 'cards'
+  const [viewMode, setViewMode] = useState(() => {
+    return typeof window !== 'undefined' && window.innerWidth < 768 ? 'cards' : 'table';
+  });
 
   // If selected chapter is invalid, default to first chapter
   const activeChapter = chapters.find(c => c.id === selectedChapterId) || chapters[0];

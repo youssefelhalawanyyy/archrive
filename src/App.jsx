@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Plus, QrCode, Layers, CheckCircle2, Clock, Sparkles } from 'lucide-react';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
+import MobileBottomNav from './components/MobileBottomNav';
+import InstallPWABanner from './components/InstallPWABanner';
 import DocumentsTable from './components/DocumentsTable';
 import ChaptersHierarchyView from './components/ChaptersHierarchyView';
 import AddChapterModal from './components/AddChapterModal';
@@ -41,6 +43,10 @@ export default function App() {
   // Start with hierarchy view: Chapter -> Binder -> Separator
   const [currentTab, setCurrentTab] = useState('hierarchy'); 
   
+  // Mobile drawer & PWA state
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [isInstallTriggered, setIsInstallTriggered] = useState(false);
+
   // Modals state
   const [isAddChapterModalOpen, setIsAddChapterModalOpen] = useState(false);
   const [isAddBinderModalOpen, setIsAddBinderModalOpen] = useState(false);
@@ -54,6 +60,25 @@ export default function App() {
   const [targetCheckoutItem, setTargetCheckoutItem] = useState(null);
   const [targetQRItem, setTargetQRItem] = useState(null);
   const [targetPrintItem, setTargetPrintItem] = useState(null);
+
+  // Read URL query params on launch for PWA shortcuts
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      if (tabParam && ['hierarchy', 'dashboard', 'binders', 'reports'].includes(tabParam)) {
+        setCurrentTab(tabParam);
+      }
+      const actionParam = params.get('action');
+      if (actionParam === 'add_separator') {
+        setIsAddSeparationModalOpen(true);
+      } else if (actionParam === 'scan_qr') {
+        setIsQRModalOpen(true);
+      }
+    } catch (e) {
+      console.warn('URL params parsing notice:', e);
+    }
+  }, []);
 
   // Initialize live 2-way subscriptions to Firebase
   useEffect(() => {
@@ -160,12 +185,15 @@ export default function App() {
         setSearchQuery={setSearchQuery}
         docsCount={totalSeparators}
         syncStatus={syncStatus}
+        onToggleMobileMenu={() => setIsMobileDrawerOpen(!isMobileDrawerOpen)}
+        onTriggerInstall={() => setIsInstallTriggered(true)}
+        onOpenQRModal={() => handleOpenQRModal()}
       />
 
       {/* Main Workspace: Sidebar (Right) + Content Area (Left) */}
       <div className="flex-1 flex w-full">
         
-        {/* 2. Sidebar Navigation */}
+        {/* 2. Sidebar Navigation (Desktop Persistent + Mobile Drawer) */}
         <Sidebar
           currentTab={currentTab}
           setCurrentTab={setCurrentTab}
@@ -180,10 +208,12 @@ export default function App() {
             bindersCount: binders.length,
             chaptersCount: chapters.length
           }}
+          isOpenMobile={isMobileDrawerOpen}
+          onCloseMobile={() => setIsMobileDrawerOpen(false)}
         />
 
         {/* 3. Main Content Area */}
-        <main className="flex-1 p-5 lg:p-7 overflow-y-auto max-w-[1550px] mx-auto w-full space-y-5">
+        <main className="flex-1 p-3.5 sm:p-5 lg:p-7 pb-24 md:pb-8 overflow-y-auto max-w-[1600px] mx-auto w-full space-y-5">
           
           {/* TAB 1: Hierarchical View (الموضوعات والأرشيف) - Chapter -> Binder -> Separators */}
           {currentTab === 'hierarchy' && (
@@ -214,14 +244,14 @@ export default function App() {
             <div className="space-y-5">
               
               {/* Executive Overview Header */}
-              <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200">
                       شركة المستقبل • قسم الأرشفة
                     </span>
                   </div>
-                  <h2 className="text-lg font-black text-slate-900 mt-1">
+                  <h2 className="text-base sm:text-lg font-black text-slate-900 mt-1">
                     سجل الفواصل والأرشيف العام
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
@@ -236,7 +266,7 @@ export default function App() {
                       setTargetBinderForSeparation(null);
                       setIsAddSeparationModalOpen(true);
                     }}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 active:scale-95 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />
                     <span>إضافة فاصل جديد</span>
@@ -245,7 +275,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => handleOpenQRModal()}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
                   >
                     <QrCode className="w-4 h-4" />
                     <span>مسح كود</span>
@@ -254,28 +284,28 @@ export default function App() {
               </div>
 
               {/* Metrics Row */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-                <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-2xs">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
+                <div className="bg-white p-3 sm:p-3.5 rounded-lg border border-slate-200 shadow-2xs">
                   <div className="text-[11px] font-semibold text-slate-500">إجمالي الفواصل الكرتونية</div>
-                  <div className="text-xl font-black text-slate-900 mt-1 font-mono">{totalSeparators}</div>
+                  <div className="text-lg sm:text-xl font-black text-slate-900 mt-1 font-mono">{totalSeparators}</div>
                   <div className="text-[10px] text-blue-700 font-bold mt-0.5">مودعة في المجلدات</div>
                 </div>
 
-                <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-2xs">
+                <div className="bg-white p-3 sm:p-3.5 rounded-lg border border-slate-200 shadow-2xs">
                   <div className="text-[11px] font-semibold text-slate-500">المجلدات الفيزيائية النشطة</div>
-                  <div className="text-xl font-black text-slate-900 mt-1 font-mono">{binders.length}</div>
+                  <div className="text-lg sm:text-xl font-black text-slate-900 mt-1 font-mono">{binders.length}</div>
                   <div className="text-[10px] text-slate-500 font-medium mt-0.5">موزعة على الأرفف</div>
                 </div>
 
-                <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-2xs">
+                <div className="bg-white p-3 sm:p-3.5 rounded-lg border border-slate-200 shadow-2xs">
                   <div className="text-[11px] font-semibold text-emerald-700">الفواصل المتاحة بالخزائن</div>
-                  <div className="text-xl font-black text-emerald-700 mt-1 font-mono">{availableCount}</div>
+                  <div className="text-lg sm:text-xl font-black text-emerald-700 mt-1 font-mono">{availableCount}</div>
                   <div className="text-[10px] text-emerald-600 font-bold mt-0.5">جاهزة للمطالعة</div>
                 </div>
 
-                <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-2xs">
+                <div className="bg-white p-3 sm:p-3.5 rounded-lg border border-slate-200 shadow-2xs">
                   <div className="text-[11px] font-semibold text-amber-800">الفواصل المستعارة ميدانياً</div>
-                  <div className="text-xl font-black text-amber-700 mt-1 font-mono">{checkedOutCount}</div>
+                  <div className="text-lg sm:text-xl font-black text-amber-700 mt-1 font-mono">{checkedOutCount}</div>
                   <div className="text-[10px] text-amber-800 font-bold mt-0.5">قيد المراجعة</div>
                 </div>
               </div>
@@ -304,9 +334,7 @@ export default function App() {
             />
           )}
 
-
-
-          {/* TAB 5: Checkout & Audit Reports */}
+          {/* TAB 4: Checkout & Audit Reports */}
           {currentTab === 'reports' && (
             <ReportsView
               auditLogs={auditLogs}
@@ -317,6 +345,23 @@ export default function App() {
 
         </main>
       </div>
+
+      {/* 4. Mobile Bottom Navigation Bar (< md) */}
+      <MobileBottomNav
+        currentTab={currentTab}
+        setCurrentTab={setCurrentTab}
+        onOpenAddModal={() => {
+          setTargetBinderForSeparation(null);
+          setIsAddSeparationModalOpen(true);
+        }}
+        checkedOutCount={checkedOutCount}
+      />
+
+      {/* 5. In-App PWA Install Banner & iOS Guidance Modal */}
+      <InstallPWABanner
+        isTriggeredManually={isInstallTriggered}
+        onCloseManual={() => setIsInstallTriggered(false)}
+      />
 
       {/* Global Modals */}
       <AddChapterModal
