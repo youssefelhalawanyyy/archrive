@@ -191,6 +191,8 @@ export default function App() {
               chapters={chapters}
               binders={binders}
               separators={separators}
+              globalSearchQuery={searchQuery}
+              setGlobalSearchQuery={setSearchQuery}
               onOpenAddChapterModal={() => setIsAddChapterModalOpen(true)}
               onOpenAddBinderModal={(chapterId) => {
                 setTargetChapterForBinder(chapterId);

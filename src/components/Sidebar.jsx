@@ -64,19 +64,19 @@ export default function Sidebar({
           type="button"
           id="sidebar-add-doc-cta"
           onClick={onOpenAddModal}
-          className="w-full mb-5 flex items-center justify-center gap-2 px-3.5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer group"
+          className="w-full mb-5 flex items-center justify-center gap-2 px-4 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-black transition-all shadow-sm cursor-pointer group"
         >
-          <FilePlus2 className="w-4 h-4 text-blue-400 group-hover:scale-105 transition-transform" />
-          <span>إضافة فاصل كرتوني</span>
+          <FilePlus2 className="w-4 h-4 text-blue-400 group-hover:scale-110 transition-transform" />
+          <span>+ إضافة فاصل كرتوني</span>
         </button>
 
         {/* Section Title */}
-        <div className="px-2 mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+        <div className="px-2 mb-2.5 text-xs font-extrabold uppercase tracking-wider text-slate-400">
           أقسام الأرشيف
         </div>
 
         {/* Navigation Links */}
-        <nav className="space-y-1" aria-label="شريط التنقل الجانبي">
+        <nav className="space-y-1.5" aria-label="شريط التنقل الجانبي">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentTab === item.id;
@@ -87,19 +87,19 @@ export default function Sidebar({
                 type="button"
                 id={`sidebar-nav-${item.id}`}
                 onClick={() => setCurrentTab(item.id)}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs transition-all cursor-pointer ${
+                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-blue-50/70 text-blue-950 font-bold border-r-3 border-blue-600'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium'
+                    ? 'bg-blue-50/80 text-blue-950 font-black border-r-4 border-blue-600 shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-bold'
                 }`}
               >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <Icon className={`w-4 h-4 shrink-0 stroke-[2] ${isActive ? 'text-blue-700' : 'text-slate-400'}`} />
+                <div className="flex items-center gap-3 min-w-0">
+                  <Icon className={`w-4 h-4 shrink-0 stroke-[2.2] ${isActive ? 'text-blue-700' : 'text-slate-400'}`} />
                   <span className="truncate">{item.label}</span>
                 </div>
 
                 {item.badge && (
-                  <span className={`text-[10px] font-medium px-2 py-0.5 rounded border shrink-0 ${
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-md border shrink-0 ${
                     item.badgeStyle || (isActive ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-slate-100 text-slate-600 border-slate-200')
                   }`}>
                     {item.badge}
@@ -112,32 +112,32 @@ export default function Sidebar({
       </div>
 
       {/* Bottom Physical Archive Snapshot */}
-      <div className="p-3.5 border-t border-slate-200 bg-slate-50/60">
-        <div className="p-3 rounded-lg bg-white border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold text-slate-800 flex items-center gap-1.5">
-              <Boxes className="w-3.5 h-3.5 text-blue-600" />
+      <div className="p-4 border-t border-slate-200 bg-slate-50/70">
+        <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
+          <div className="flex items-center justify-between mb-2.5">
+            <span className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+              <Boxes className="w-4 h-4 text-blue-600" />
               حالة الأرشيف الميداني
             </span>
-            <span className="text-[9px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+            <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
               محدث
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-center">
-            <div className="p-1.5 rounded bg-slate-50 border border-slate-100">
-              <div className="text-sm font-black text-slate-900 font-mono">{stats.totalDocs}</div>
-              <div className="text-[10px] text-slate-500">إجمالي الفواصل</div>
+            <div className="p-2 rounded-lg bg-slate-50 border border-slate-100">
+              <div className="text-base font-black text-slate-900 font-mono">{stats.totalDocs}</div>
+              <div className="text-xs text-slate-500 font-medium">إجمالي الفواصل</div>
             </div>
-            <div className="p-1.5 rounded bg-slate-50 border border-slate-100">
-              <div className="text-sm font-black text-amber-700 font-mono">{stats.checkedOutCount}</div>
-              <div className="text-[10px] text-slate-500">مستعارة حالياً</div>
+            <div className="p-2 rounded-lg bg-slate-50 border border-slate-100">
+              <div className="text-base font-black text-amber-700 font-mono">{stats.checkedOutCount}</div>
+              <div className="text-xs text-slate-500 font-medium">مستعارة حالياً</div>
             </div>
           </div>
 
-          <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500">
+          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
             <span>شركة المستقبل</span>
-            <span className="text-slate-700 font-semibold">غرفة الأرشيف 102</span>
+            <span className="text-slate-800 font-bold">غرفة الأرشيف 102</span>
           </div>
         </div>
       </div>

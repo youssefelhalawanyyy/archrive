@@ -77,72 +77,72 @@ export default function ReportsView({
 
       {/* Top Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
-          <div className="text-[11px] text-slate-500 font-semibold">إجمالي حركات التدقيق المسجلة</div>
-          <div className="text-xl font-black text-slate-900 mt-1 font-mono">{auditLogs.length} حركة</div>
-          <div className="text-[10px] text-emerald-600 font-bold mt-0.5">سجل تدقيق مشفر ومحفوظ</div>
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs">
+          <div className="text-xs text-slate-500 font-bold">إجمالي حركات التدقيق المسجلة</div>
+          <div className="text-2xl font-black text-slate-900 mt-1 font-mono">{auditLogs.length} حركة</div>
+          <div className="text-xs text-emerald-600 font-bold mt-1">سجل تدقيق مشفر ومحفوظ</div>
         </div>
 
-        <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
-          <div className="text-[11px] text-amber-800 font-semibold">الفواصل المستعارة ميدانياً الآن</div>
-          <div className="text-xl font-black text-amber-700 mt-1 font-mono">{checkedOutSeps.length} فاصل</div>
-          <div className="text-[10px] text-amber-800 font-bold mt-0.5">قيد المراجعة والمطالعة</div>
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs">
+          <div className="text-xs text-amber-800 font-bold">الفواصل المستعارة ميدانياً الآن</div>
+          <div className="text-2xl font-black text-amber-700 mt-1 font-mono">{checkedOutSeps.length} فاصل</div>
+          <div className="text-xs text-amber-800 font-bold mt-1">قيد المراجعة والمطالعة</div>
         </div>
 
-        <div className="p-3.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
-          <div className="text-[11px] text-emerald-700 font-semibold">نسبة الفواصل المتاحة في الأرفف</div>
-          <div className="text-xl font-black text-emerald-700 mt-1 font-mono">
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs">
+          <div className="text-xs text-emerald-700 font-bold">نسبة الفواصل المتاحة في الأرفف</div>
+          <div className="text-2xl font-black text-emerald-700 mt-1 font-mono">
             {availablePercentage}%
           </div>
-          <div className="text-[10px] text-emerald-600 font-bold mt-0.5">مودعة داخل المجلدات</div>
+          <div className="text-xs text-emerald-600 font-bold mt-1">مودعة داخل المجلدات</div>
         </div>
       </div>
 
       {/* Currently Checked Out Separators Section */}
       {checkedOutSeps.length > 0 && (
-        <div className="bg-white rounded-xl border border-amber-200 p-4 shadow-2xs space-y-3">
-          <div className="flex items-center justify-between pb-2.5 border-b border-amber-100">
+        <div className="bg-white rounded-xl border border-amber-200 p-5 shadow-2xs space-y-3">
+          <div className="flex items-center justify-between pb-3 border-b border-amber-100">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-600" />
-              <h3 className="text-sm font-black text-slate-900">
+              <AlertTriangle className="w-5 h-5 text-amber-600" />
+              <h3 className="text-base font-black text-slate-900">
                 قائمة الفواصل الكرتونية المستعارة حالياً (تتطلب المتابعة)
               </h3>
             </div>
-            <span className="text-[11px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+            <span className="text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200">
               {checkedOutSeps.length} فواصل خارج المجلدات
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
             {checkedOutSeps.map((sep) => (
               <div 
                 key={sep.id}
-                className="p-3.5 rounded-lg border border-amber-200 bg-amber-50/40 flex flex-col justify-between"
+                className="p-4 rounded-xl border border-amber-200 bg-amber-50/50 flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="font-mono text-[11px] font-bold text-slate-800 bg-white px-1.5 py-0.5 rounded border border-amber-200">
+                  <div className="flex items-center justify-between text-xs mb-1.5">
+                    <span className="font-mono text-xs font-bold text-slate-800 bg-white px-2 py-0.5 rounded border border-amber-200">
                       {sep.code}
                     </span>
-                    <span className="text-[10px] font-bold text-amber-800">
+                    <span className="text-xs font-bold text-amber-800">
                       مستعار منذ: {sep.borrowDate || sep.date}
                     </span>
                   </div>
-                  <h4 className="text-xs font-black text-slate-900 mt-1">{sep.name}</h4>
-                  <div className="mt-2 text-xs text-slate-700 space-y-0.5 text-[11px]">
-                    <div>المستعير: <strong>{sep.borrower}</strong></div>
-                    <div>الموقع الأصلي: <span className="text-slate-500 font-medium">{sep.location} ({sep.binderName})</span></div>
+                  <h4 className="text-sm font-black text-slate-900 mt-1">{sep.name}</h4>
+                  <div className="mt-2 text-xs text-slate-700 space-y-1">
+                    <div>المستعير: <strong className="text-slate-900">{sep.borrower}</strong></div>
+                    <div>الموقع الأصلي: <span className="text-slate-600 font-medium">{sep.location} ({sep.binderName})</span></div>
                   </div>
                 </div>
 
-                <div className="mt-3 pt-2.5 border-t border-amber-200/60 flex items-center justify-between">
-                  <span className="text-[11px] text-amber-800 font-medium">
-                    تاريخ الاسترداد المتوقع: {sep.dueDate || '2024/02/15'}
+                <div className="mt-3.5 pt-3 border-t border-amber-200/60 flex items-center justify-between">
+                  <span className="text-xs text-amber-800 font-semibold">
+                    الاسترداد المتوقع: {sep.dueDate || '2024/02/15'}
                   </span>
                   <button
                     type="button"
                     onClick={() => onToggleStatus(sep)}
-                    className="px-3 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer"
+                    className="px-3.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer"
                   >
                     تأكيد الإرجاع للمجلد
                   </button>

@@ -97,8 +97,8 @@ export default function BindersView({
               <div>
                 {/* Top Location & Code */}
                 <div className="flex items-center justify-between text-xs mb-2 pt-0.5">
-                  <div className="flex items-center gap-1.5 font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-[11px]">
-                    <MapPin className="w-3 h-3 text-blue-600" />
+                  <div className="flex items-center gap-1.5 font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-xs">
+                    <MapPin className="w-3.5 h-3.5 text-blue-600" />
                     <span>{binder.cabinet} • {binder.shelf}</span>
                   </div>
                   <span className="font-mono text-xs font-black bg-slate-900 text-white px-2 py-0.5 rounded shadow-2xs">
@@ -110,29 +110,29 @@ export default function BindersView({
                 <h3 className="text-sm font-black text-slate-900 group-hover:text-blue-700 transition-colors">
                   {binder.name}
                 </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">
+                <p className="text-xs text-slate-500 mt-1 line-clamp-2">
                   {binder.description}
                 </p>
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 gap-2 my-3">
-                  <div className="p-2 rounded bg-slate-50 border border-slate-100 text-center">
-                    <div className="text-sm font-black text-slate-900 font-mono">{sepsCount}</div>
-                    <div className="text-[10px] text-slate-500">فاصل كرتوني</div>
+                  <div className="p-2 rounded-lg bg-slate-50 border border-slate-100 text-center">
+                    <div className="text-base font-black text-slate-900 font-mono">{sepsCount}</div>
+                    <div className="text-xs text-slate-500 font-medium">فاصل كرتوني</div>
                   </div>
-                  <div className="p-2 rounded bg-slate-50 border border-slate-100 text-center">
-                    <div className="text-sm font-black text-amber-700 font-mono">{checkedOutInBinder}</div>
-                    <div className="text-[10px] text-slate-500">مستعارة حالياً</div>
+                  <div className="p-2 rounded-lg bg-slate-50 border border-slate-100 text-center">
+                    <div className="text-base font-black text-amber-700 font-mono">{checkedOutInBinder}</div>
+                    <div className="text-xs text-slate-500 font-medium">مستعارة حالياً</div>
                   </div>
                 </div>
 
                 {/* Capacity Progress Bar */}
                 <div className="space-y-1 mb-3">
-                  <div className="flex items-center justify-between text-[10px] text-slate-500">
-                    <span>نسبة امتلاء المجلد:</span>
+                  <div className="flex items-center justify-between text-xs text-slate-500">
+                    <span>نسبة الامتلاء:</span>
                     <span className="font-bold text-slate-700 font-mono">{capacityPercentage}% ({sepsCount}/{capacity} فواصل)</span>
                   </div>
-                  <div className="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                  <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
                     <div 
                       className="h-full rounded-full bg-blue-600 transition-all duration-500"
                       style={{ width: `${capacityPercentage}%` }}
