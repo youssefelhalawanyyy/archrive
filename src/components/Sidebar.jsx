@@ -1,15 +1,12 @@
 import React from 'react';
 import { 
-  LayoutDashboard, 
   BookOpen, 
+  LayoutDashboard, 
   FolderArchive, 
   Server, 
   FilePlus2, 
   FileText, 
   Boxes, 
-  ChevronLeft,
-  Sparkles,
-  Layers,
   Building2
 } from 'lucide-react';
 
@@ -25,81 +22,61 @@ export default function Sidebar({
       label: 'الموضوعات والأرشيف',
       icon: BookOpen,
       badge: `${stats.chaptersCount || 5} موضوعات`,
-      badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200 font-bold',
       description: 'الموضوع ➔ المجلدات ➔ الفواصل'
     },
     {
       id: 'dashboard',
-      label: 'الرئيسية (سجل الوثائق)',
+      label: 'سجل الوثائق العام',
       icon: LayoutDashboard,
       badge: null,
-      description: 'متابعة وبحث كافة الوثائق المادية'
+      description: 'جدول الوثائق والبحث الفوري'
     },
     {
       id: 'binders',
       label: 'المجلدات النشطة',
       icon: FolderArchive,
       badge: `${stats.bindersCount} مجلدات`,
-      badgeColor: 'bg-brand-50 text-brand-700 border-brand-200',
-      description: 'أرفف المجلدات وسعتها'
+      description: 'الأرفف وسعة المجلدات'
     },
     {
       id: 'cabinet-map',
       label: 'الخزانة الرقمية',
       icon: Server,
       badge: '3 خزائن',
-      badgeColor: 'bg-purple-50 text-purple-700 border-purple-200',
-      description: 'خريطة الأرفف والخزائن الورقية'
-    },
-    {
-      id: 'add-document',
-      label: 'إيداع وثيقة جديدة',
-      icon: FilePlus2,
-      badge: 'جديد',
-      badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200 animate-pulse',
-      isAction: true,
-      description: 'إيداع وثيقة في فاصل ومجلد'
+      description: 'خريطة الأرفف والخزائن'
     },
     {
       id: 'reports',
       label: 'تقارير الإعارة',
       icon: FileText,
       badge: stats.checkedOutCount > 0 ? `${stats.checkedOutCount} مستعار` : null,
-      badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
-      description: 'سجل حركات وتدقيق الإعارة'
+      badgeStyle: 'bg-amber-50 text-amber-800 border-amber-200',
+      description: 'سجل الإعارة والتدقيق'
     }
   ];
 
-  const handleItemClick = (item) => {
-    if (item.isAction) {
-      onOpenAddModal();
-    } else {
-      setCurrentTab(item.id);
-    }
-  };
-
   return (
-    <aside className="w-64 lg:w-72 bg-white border-l border-slate-200/90 flex flex-col justify-between shrink-0 shadow-xs select-none">
-      <div className="p-4 lg:p-5">
+    <aside className="w-64 bg-white border-l border-slate-200 flex flex-col justify-between shrink-0 shadow-2xs font-cairo select-none">
+      <div className="p-4">
         
         {/* Quick CTA to Add Document */}
         <button
           type="button"
           id="sidebar-add-doc-cta"
           onClick={onOpenAddModal}
-          className="w-full mb-5 flex items-center justify-center gap-2.5 px-4 py-3 bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 hover:from-brand-500 hover:to-brand-700 text-white rounded-2xl font-bold shadow-md shadow-brand-600/25 transition-all transform active:scale-98 group cursor-pointer"
+          className="w-full mb-5 flex items-center justify-center gap-2 px-3.5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer group"
         >
-          <FilePlus2 className="w-5 h-5 transition-transform group-hover:scale-110" />
-          <span className="text-sm">إيداع وثيقة جديدة</span>
+          <FilePlus2 className="w-4 h-4 text-blue-400 group-hover:scale-105 transition-transform" />
+          <span>إيداع وثيقة جديدة</span>
         </button>
 
-        {/* Navigation Section Title */}
-        <div className="px-3 mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">
-          القائمة والأقسام
+        {/* Section Title */}
+        <div className="px-2 mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          أقسام الأرشيف
         </div>
 
-        {/* Menu list */}
-        <nav className="space-y-1.5" aria-label="شريط التنقل الجانبي">
+        {/* Navigation Links */}
+        <nav className="space-y-1" aria-label="شريط التنقل الجانبي">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentTab === item.id;
@@ -109,28 +86,22 @@ export default function Sidebar({
                 key={item.id}
                 type="button"
                 id={`sidebar-nav-${item.id}`}
-                onClick={() => handleItemClick(item)}
-                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-semibold transition-all group cursor-pointer ${
+                onClick={() => setCurrentTab(item.id)}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-brand-50 text-brand-700 shadow-xs font-bold border border-brand-200/70'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 border border-transparent'
+                    ? 'bg-blue-50/70 text-blue-950 font-bold border-r-3 border-blue-600'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium'
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-xl transition-colors ${
-                    isActive 
-                      ? 'bg-brand-600 text-white shadow-xs' 
-                      : 'bg-slate-100 text-slate-500 group-hover:bg-brand-100 group-hover:text-brand-600'
-                  }`}>
-                    <Icon className="w-4 h-4 stroke-[2.2]" />
-                  </div>
-                  <div className="text-right">
-                    <span className="block truncate">{item.label}</span>
-                  </div>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Icon className={`w-4 h-4 shrink-0 stroke-[2] ${isActive ? 'text-blue-700' : 'text-slate-400'}`} />
+                  <span className="truncate">{item.label}</span>
                 </div>
 
                 {item.badge && (
-                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${item.badgeColor || 'bg-slate-100 text-slate-600'}`}>
+                  <span className={`text-[10px] font-medium px-2 py-0.5 rounded border shrink-0 ${
+                    item.badgeStyle || (isActive ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-slate-100 text-slate-600 border-slate-200')
+                  }`}>
                     {item.badge}
                   </span>
                 )}
@@ -141,32 +112,32 @@ export default function Sidebar({
       </div>
 
       {/* Bottom Physical Archive Snapshot */}
-      <div className="p-4 border-t border-slate-100 bg-gradient-to-b from-transparent to-slate-50/70">
-        <div className="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+      <div className="p-3.5 border-t border-slate-200 bg-slate-50/60">
+        <div className="p-3 rounded-lg bg-white border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-              <Boxes className="w-4 h-4 text-brand-600" />
-              حالة الأرشيف الفيزيائي
+            <span className="text-[11px] font-bold text-slate-800 flex items-center gap-1.5">
+              <Boxes className="w-3.5 h-3.5 text-blue-600" />
+              حالة الأرشيف الميداني
             </span>
-            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/50">
-              تصنيف هرمي
+            <span className="text-[9px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+              محدث
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 text-center pt-1">
-            <div className="p-2 rounded-xl bg-slate-50 border border-slate-100">
-              <div className="text-base font-black text-slate-800">{stats.totalDocs}</div>
-              <div className="text-[11px] text-slate-500">إجمالي الوثائق</div>
+          <div className="grid grid-cols-2 gap-2 text-center">
+            <div className="p-1.5 rounded bg-slate-50 border border-slate-100">
+              <div className="text-sm font-black text-slate-900 font-mono">{stats.totalDocs}</div>
+              <div className="text-[10px] text-slate-500">إجمالي الوثائق</div>
             </div>
-            <div className="p-2 rounded-xl bg-amber-50/60 border border-amber-100">
-              <div className="text-base font-black text-amber-700">{stats.checkedOutCount}</div>
-              <div className="text-[11px] text-amber-800">مستعارة حالياً</div>
+            <div className="p-1.5 rounded bg-slate-50 border border-slate-100">
+              <div className="text-sm font-black text-amber-700 font-mono">{stats.checkedOutCount}</div>
+              <div className="text-[10px] text-slate-500">مستعارة حالياً</div>
             </div>
           </div>
 
-          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-600">
+          <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500">
             <span>شركة المستقبل</span>
-            <span className="text-brand-600 font-bold">الهيكل الميداني</span>
+            <span className="text-slate-700 font-semibold">غرفة الأرشيف 102</span>
           </div>
         </div>
       </div>

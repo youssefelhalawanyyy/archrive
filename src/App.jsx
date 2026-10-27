@@ -186,7 +186,7 @@ export default function App() {
   const availableCount = totalDocs - checkedOutCount;
 
   return (
-    <div className="min-h-screen bg-slate-100/70 text-slate-800 flex flex-col font-cairo" dir="rtl">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-cairo" dir="rtl">
       
       {/* 1. Top Navbar */}
       <Navbar
@@ -200,7 +200,7 @@ export default function App() {
       />
 
       {/* Main Workspace: Sidebar (Right) + Content Area (Left) */}
-      <div className="flex-1 flex max-w-7xl w-full mx-auto">
+      <div className="flex-1 flex w-full">
         
         {/* 2. Sidebar Navigation */}
         <Sidebar
@@ -220,7 +220,7 @@ export default function App() {
         />
 
         {/* 3. Main Content Area */}
-        <main className="flex-1 p-4 lg:p-7 overflow-y-auto space-y-6">
+        <main className="flex-1 p-5 lg:p-7 overflow-y-auto max-w-[1550px] mx-auto w-full space-y-5">
           
           {/* TAB 1: Hierarchical View (الموضوعات والأرشيف) - Starts with el mawdoo3 first! */}
           {currentTab === 'hierarchy' && (

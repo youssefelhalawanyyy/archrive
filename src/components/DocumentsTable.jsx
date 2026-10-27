@@ -70,33 +70,33 @@ export default function DocumentsTable({
   };
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200/90 shadow-card overflow-hidden transition-all font-cairo">
+    <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden transition-all font-cairo">
       
       {/* Table Header Controls */}
-      <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-50/50 to-white">
+      <div className="p-4 sm:p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white">
         
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-base sm:text-lg font-black text-slate-900">
-              آخر الوثائق المضافة
+            <h3 className="text-base font-black text-slate-900">
+              سجل الوثائق الورقية
             </h3>
-            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-brand-50 text-brand-700 border border-brand-200">
+            <span className="text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
               {filteredDocuments.length} وثيقة
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            جدول إدارة ومتابعة الوثائق المادية مع تصنيف الموضوع والمجلد والفاصل
+            إدارة ومتابعة الوثائق المادية مع تصنيف الموضوع والمجلد والفاصل
           </p>
         </div>
 
         {/* Status Filter Badges */}
-        <div className="flex items-center gap-1.5 bg-slate-100/80 p-1 rounded-xl text-xs font-semibold self-start sm:self-auto border border-slate-200/60">
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg text-xs font-medium self-start sm:self-auto border border-slate-200">
           <button
             type="button"
             onClick={() => { setStatusFilter('all'); setCurrentPage(1); }}
-            className={`px-3 py-1.5 rounded-lg transition-all ${
+            className={`px-3 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
               statusFilter === 'all' 
-                ? 'bg-white text-slate-900 shadow-xs font-bold' 
+                ? 'bg-white text-slate-900 shadow-2xs' 
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -105,25 +105,25 @@ export default function DocumentsTable({
           <button
             type="button"
             onClick={() => { setStatusFilter('available'); setCurrentPage(1); }}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
               statusFilter === 'available' 
-                ? 'bg-emerald-600 text-white shadow-xs font-bold' 
+                ? 'bg-emerald-600 text-white shadow-2xs' 
                 : 'text-slate-600 hover:text-emerald-700'
             }`}
           >
-            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
             <span>متاح ({documents.filter(d => d.status === 'available').length})</span>
           </button>
           <button
             type="button"
             onClick={() => { setStatusFilter('checked_out'); setCurrentPage(1); }}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
               statusFilter === 'checked_out' 
-                ? 'bg-amber-600 text-white shadow-xs font-bold' 
+                ? 'bg-amber-600 text-white shadow-2xs' 
                 : 'text-slate-600 hover:text-amber-800'
             }`}
           >
-            <span className="w-2 h-2 rounded-full bg-amber-300"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-300"></span>
             <span>مستعار ({documents.filter(d => d.status === 'checked_out').length})</span>
           </button>
         </div>
