@@ -8,13 +8,17 @@ import {
   Boxes, 
   Building2,
   X,
-  Archive
+  Archive,
+  FileSpreadsheet,
+  Download
 } from 'lucide-react';
 
 export default function Sidebar({ 
   currentTab, 
   setCurrentTab, 
   onOpenAddModal, 
+  onOpenExcel,
+  onOpenExportExcel,
   stats = { totalDocs: 0, checkedOutCount: 0, availableCount: 0, bindersCount: 5, chaptersCount: 5 },
   isOpenMobile = false,
   onCloseMobile = null
@@ -112,6 +116,56 @@ export default function Sidebar({
             );
           })}
         </nav>
+
+        {/* Bulk Excel & Backup Quick Access */}
+        {(onOpenExcel || onOpenExportExcel) && (
+          <div className="mt-4 pt-3 border-t border-slate-100">
+            <div className="px-2 mb-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+              أدوات الإكسل والنسخ الاحتياطي
+            </div>
+            <div className="space-y-1.5">
+              {onOpenExcel && (
+                <button
+                  type="button"
+                  id="sidebar-excel-import-btn"
+                  onClick={() => {
+                    onOpenExcel();
+                    if (onCloseMobile) onCloseMobile();
+                  }}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold bg-emerald-50/80 hover:bg-emerald-100 text-emerald-900 border border-emerald-200/70 transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center gap-2">
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-700 group-hover:scale-110 transition-transform" />
+                    <span>إيداع فواصل (Excel)</span>
+                  </div>
+                  <span className="text-[10px] bg-emerald-200/60 text-emerald-800 px-1.5 py-0.5 rounded font-mono">
+                    مجمع
+                  </span>
+                </button>
+              )}
+
+              {onOpenExportExcel && (
+                <button
+                  type="button"
+                  id="sidebar-excel-export-btn"
+                  onClick={() => {
+                    onOpenExportExcel();
+                    if (onCloseMobile) onCloseMobile();
+                  }}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80 transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center gap-2">
+                    <Download className="w-3.5 h-3.5 text-slate-500 group-hover:scale-110 transition-transform" />
+                    <span>تصدير الأرشيف بالكامل</span>
+                  </div>
+                  <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">
+                    .xlsx
+                  </span>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Bottom Physical Archive Snapshot */}

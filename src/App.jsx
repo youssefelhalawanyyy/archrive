@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, QrCode, Layers, CheckCircle2, Clock, Sparkles } from 'lucide-react';
+import { Plus, QrCode, Layers, CheckCircle2, Clock, Sparkles, FileSpreadsheet, Download } from 'lucide-react';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import MobileBottomNav from './components/MobileBottomNav';
@@ -16,6 +16,7 @@ import DeleteConfirmModal from './components/DeleteConfirmModal';
 import CheckoutModal from './components/CheckoutModal';
 import QRModal from './components/QRModal';
 import SpineLabelModal from './components/SpineLabelModal';
+import ExcelImportExportModal from './components/ExcelImportExportModal';
 import BindersView from './components/BindersView';
 import ReportsView from './components/ReportsView';
 
@@ -36,6 +37,7 @@ import {
   updateSeparator,
   toggleSeparatorStatus,
   deleteSeparator,
+  bulkAddSeparators,
   getAuditLogs,
   subscribeToAuditLogs,
   subscribeToSyncStatus,
@@ -85,6 +87,8 @@ export default function App() {
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+  const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
+  const [excelModalInitialTab, setExcelModalInitialTab] = useState('import'); // 'import' | 'export'
   const [targetCheckoutItem, setTargetCheckoutItem] = useState(null);
   const [targetQRItem, setTargetQRItem] = useState(null);
   const [targetPrintItem, setTargetPrintItem] = useState(null);
@@ -278,6 +282,21 @@ export default function App() {
     setIsPrintModalOpen(true);
   };
 
+  // Open Excel Import/Export modal
+  const handleOpenExcelModal = (tab = 'import') => {
+    setExcelModalInitialTab(tab);
+    setIsExcelModalOpen(true);
+  };
+
+  // Handle bulk separator deposit from Excel into Firebase
+  const handleBulkDeposit = async (items) => {
+    const result = await bulkAddSeparators(items);
+    setSeparators(result.updatedSeparators);
+    setBinders(result.updatedBinders);
+    setAuditLogs(getAuditLogs());
+    return result;
+  };
+
   // Stats calculation
   const totalSeparators = separators.length;
   const checkedOutCount = separators.filter(s => s.status === 'checked_out').length;
@@ -295,6 +314,8 @@ export default function App() {
         onToggleMobileMenu={() => setIsMobileDrawerOpen(!isMobileDrawerOpen)}
         onTriggerInstall={() => setIsInstallTriggered(true)}
         onOpenQRModal={() => handleOpenQRModal()}
+        onOpenExcel={() => handleOpenExcelModal('import')}
+        onOpenExportExcel={() => handleOpenExcelModal('export')}
       />
 
       {/* Main Workspace: Sidebar (Right) + Content Area (Left) */}
@@ -308,6 +329,8 @@ export default function App() {
             setTargetBinderForSeparation(null);
             setIsAddSeparationModalOpen(true);
           }}
+          onOpenExcel={() => handleOpenExcelModal('import')}
+          onOpenExportExcel={() => handleOpenExcelModal('export')}
           stats={{
             totalDocs: totalSeparators,
             checkedOutCount,
@@ -347,6 +370,8 @@ export default function App() {
               onToggleStatus={handleOpenStatusToggle}
               onOpenQRModal={handleOpenQRModal}
               onOpenPrintModal={handleOpenPrintModal}
+              onOpenExcel={() => handleOpenExcelModal('import')}
+              onOpenExportExcel={() => handleOpenExcelModal('export')}
               onDeleteSeparator={(sepId) => {
                 const target = separators.find(s => s.id === sepId);
                 if (target) handleOpenDeleteSeparation(target);
@@ -374,7 +399,7 @@ export default function App() {
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 self-start md:self-auto">
+                <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
                   <button
                     type="button"
                     onClick={() => {
@@ -385,6 +410,28 @@ export default function App() {
                   >
                     <Plus className="w-4 h-4" />
                     <span>إضافة فاصل جديد</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    id="dashboard-bulk-excel-btn"
+                    onClick={() => handleOpenExcelModal('import')}
+                    className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+                    title="إيداع فواصل متعددة دفعة واحدة من ملف إكسل"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-200" />
+                    <span>إيداع مجمع (Excel)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    id="dashboard-export-excel-btn"
+                    onClick={() => handleOpenExcelModal('export')}
+                    className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-lg bg-white hover:bg-slate-100 active:scale-95 text-slate-700 text-xs font-bold border border-slate-200 shadow-2xs transition-all cursor-pointer"
+                    title="تصدير نسخة احتياطية كاملة من الأرشيف إلى ملف Excel"
+                  >
+                    <Download className="w-4 h-4 text-emerald-700" />
+                    <span className="hidden sm:inline">تصدير إكسل</span>
                   </button>
 
                   <button
@@ -433,6 +480,8 @@ export default function App() {
                 onOpenQRModal={handleOpenQRModal}
                 onOpenPrintModal={handleOpenPrintModal}
                 onOpenEditSeparationModal={handleOpenEditSeparation}
+                onOpenExcelModal={() => handleOpenExcelModal('import')}
+                onOpenExportExcel={() => handleOpenExcelModal('export')}
                 onDeleteSeparator={(sepId) => {
                   const target = separators.find(s => s.id === sepId);
                   if (target) handleOpenDeleteSeparation(target);
@@ -578,6 +627,18 @@ export default function App() {
         binders={binders}
         separators={separators}
         chapters={chapters}
+      />
+
+      {/* Excel Import / Export & Backup Modal */}
+      <ExcelImportExportModal
+        isOpen={isExcelModalOpen}
+        onClose={() => setIsExcelModalOpen(false)}
+        chapters={chapters}
+        binders={binders}
+        separators={separators}
+        auditLogs={auditLogs}
+        initialTab={excelModalInitialTab}
+        onBulkDeposit={handleBulkDeposit}
       />
 
     </div>

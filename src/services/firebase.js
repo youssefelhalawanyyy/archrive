@@ -670,6 +670,108 @@ export const addSeparator = async (newSeparator) => {
   return fullSep;
 };
 
+export const bulkAddSeparators = async (items) => {
+  if (!items || items.length === 0) return { updatedSeparators: getSeparators(), updatedBinders: getBinders(), count: 0 };
+  notifySyncStatus("saving");
+
+  const existingSeps = getSeparators();
+  const binders = getBinders();
+  const binderCounts = {};
+
+  // Track counts per binder
+  binders.forEach(b => {
+    const countInBinder = existingSeps.filter(s => s.binderId === b.id || s.binderCode === b.code).length;
+    binderCounts[b.id] = countInBinder;
+  });
+
+  const formattedNewSeps = [];
+
+  for (let i = 0; i < items.length; i++) {
+    const raw = items[i];
+    const binder = raw.matchedBinder || binders.find(b => b.id === raw.binderId) || binders[0];
+    const currentCount = (binderCounts[binder?.id] || 0) + 1;
+    binderCounts[binder?.id] = currentCount;
+
+    const formattedNum = currentCount.toString().padStart(2, '0');
+    const code = raw.code || `${binder?.code || 'BIN-01'}-S${formattedNum}`;
+    const sepId = raw.id || `sep-excel-${Date.now()}-${i}`;
+
+    const newSep = {
+      id: sepId,
+      code: code,
+      name: raw.name || `فاصل ${currentCount}`,
+      chapterId: binder?.chapterId || '',
+      chapterName: binder?.chapterName || '',
+      chapterCode: binder?.chapterCode || '',
+      binderId: binder?.id || '',
+      binderName: binder?.name || '',
+      binderCode: binder?.code || '',
+      cabinet: binder?.cabinet || 'الخزانة الرئيسية',
+      shelf: binder?.shelf || 'رف 1',
+      location: `${binder?.cabinet || 'الخزانة الرئيسية'} - ${binder?.shelf || 'رف 1'}`,
+      color: raw.color || '#38bdf8',
+      papersCount: parseInt(raw.papersCount) || 20,
+      date: raw.date || new Date().toISOString().split('T')[0].replace(/-/g, '/'),
+      status: "available",
+      client: raw.client || "عام",
+      description: raw.description || `فاصل كرتوني مودع من ملف إكسل داخل مجلد ${binder?.name}`,
+      qrCode: `ARC-${code}`,
+      barcode: `${Math.floor(100000000000 + Math.random() * 900000000000)}`,
+      createdAt: new Date().toISOString()
+    };
+
+    formattedNewSeps.push(newSep);
+  }
+
+  const updatedSeparators = [...formattedNewSeps, ...existingSeps];
+  setLocal(STORAGE_SEPARATORS, updatedSeparators);
+
+  // Update affected binders counts
+  const updatedBinders = binders.map(b => {
+    if (binderCounts[b.id] !== undefined) {
+      return { ...b, currentSeparatorsCount: binderCounts[b.id] };
+    }
+    return b;
+  });
+  setLocal(STORAGE_BINDERS, updatedBinders);
+
+  // Record bulk deposit in audit logs
+  await addAuditLog({
+    docId: `bulk-${Date.now()}`,
+    docTitle: `إيداع مجمع لعدد ${formattedNewSeps.length} فاصل من ملف إكسل`,
+    action: "create",
+    actionName: "إيداع مجمع من إكسل (Bulk Import)",
+    performedBy: "أحمد",
+    borrower: null,
+    date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+    reason: `تم إيداع عدد ${formattedNewSeps.length} فاصل كرتوني وتوزيعها على المجلدات عبر ملف إكسل`
+  });
+
+  // Sync to Firestore
+  if (db) {
+    try {
+      for (const sep of formattedNewSeps) {
+        try {
+          await setDoc(doc(db, "separators", sep.id), sep);
+        } catch (e) {}
+      }
+      for (const b of updatedBinders) {
+        if (binderCounts[b.id] !== undefined) {
+          try {
+            await setDoc(doc(db, "binders", b.id), b, { merge: true });
+          } catch (e) {}
+        }
+      }
+      notifySyncStatus("synced");
+    } catch (e) {
+      console.error("Firestore bulkAddSeparators error:", e);
+      notifySyncStatus("synced");
+    }
+  }
+
+  return { updatedSeparators, updatedBinders, count: formattedNewSeps.length };
+};
+
 export const toggleSeparatorStatus = async (id, borrowerDetails = null) => {
   notifySyncStatus("saving");
   const seps = getSeparators();

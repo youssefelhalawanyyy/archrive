@@ -8,7 +8,8 @@ import {
   Download,
   Menu,
   Sparkles,
-  QrCode
+  QrCode,
+  FileSpreadsheet
 } from 'lucide-react';
 
 export default function Navbar({ 
@@ -18,7 +19,9 @@ export default function Navbar({
   syncStatus = 'synced',
   onToggleMobileMenu,
   onTriggerInstall,
-  onOpenQRModal
+  onOpenQRModal,
+  onOpenExcel,
+  onOpenExportExcel
 }) {
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
@@ -168,6 +171,21 @@ export default function Navbar({
             </button>
           )}
 
+          {/* Excel Import / Export & Backup Button */}
+          {onOpenExcel && (
+            <button
+              type="button"
+              id="navbar-excel-btn"
+              onClick={onOpenExcel}
+              title="استيراد وتصدير إكسل ونسخ احتياطي كامل للأرشيف"
+              className="p-2 sm:px-3 sm:py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-2xs"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-emerald-700" />
+              <span className="hidden xl:inline">إكسل ونسخ احتياطي</span>
+              <span className="hidden sm:inline xl:hidden">إكسل</span>
+            </button>
+          )}
+
           {/* PWA Install Button (If not already installed in standalone mode) */}
           {!isStandalone && onTriggerInstall && (
             <button
@@ -251,6 +269,42 @@ export default function Navbar({
                   <div className="px-3.5 py-1.5 flex items-center justify-between">
                     <span>إجمالي الفواصل:</span>
                     <span className="font-bold text-slate-900">{docsCount} فاصل</span>
+                  </div>
+                  <div className="p-2 border-t border-slate-100 mt-1 space-y-1">
+                    {onOpenExcel && (
+                      <button
+                        type="button"
+                        id="user-menu-excel-import"
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          onOpenExcel();
+                        }}
+                        className="w-full py-1.5 px-2.5 rounded-lg bg-emerald-50 text-emerald-800 text-xs font-bold flex items-center justify-between hover:bg-emerald-100 transition-colors cursor-pointer"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>إيداع فواصل (Excel)</span>
+                        </span>
+                        <span className="text-[10px] bg-emerald-200/60 text-emerald-800 px-1.5 py-0.5 rounded font-mono">مجمع</span>
+                      </button>
+                    )}
+                    {onOpenExportExcel && (
+                      <button
+                        type="button"
+                        id="user-menu-excel-export"
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          onOpenExportExcel();
+                        }}
+                        className="w-full py-1.5 px-2.5 rounded-lg bg-slate-50 text-slate-700 text-xs font-bold flex items-center justify-between hover:bg-slate-100 transition-colors cursor-pointer border border-slate-200/60"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Download className="w-3.5 h-3.5 text-slate-600" />
+                          <span>تصدير الأرشيف بالكامل</span>
+                        </span>
+                        <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">.xlsx</span>
+                      </button>
+                    )}
                   </div>
                   {!isStandalone && (
                     <div className="p-2 border-t border-slate-100 mt-1">

@@ -12,7 +12,9 @@ import {
   Building2, 
   Printer, 
   AlertCircle,
-  Pencil
+  Pencil,
+  FileSpreadsheet,
+  Download
 } from 'lucide-react';
 
 export default function DocumentsTable({ 
@@ -22,7 +24,9 @@ export default function DocumentsTable({
   onOpenQRModal, 
   onOpenPrintModal,
   onOpenEditSeparationModal,
-  onDeleteSeparator 
+  onDeleteSeparator,
+  onOpenExcelModal,
+  onOpenExportExcel
 }) {
   const [statusFilter, setStatusFilter] = useState('all'); // all, available, checked_out
   const [currentPage, setCurrentPage] = useState(1);
@@ -86,43 +90,74 @@ export default function DocumentsTable({
           </p>
         </div>
 
-        {/* Status Filter Badges */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg text-xs font-medium self-start sm:self-auto border border-slate-200">
-          <button
-            type="button"
-            onClick={() => { setStatusFilter('all'); setCurrentPage(1); }}
-            className={`px-3 py-1.5 rounded text-xs font-bold transition-all cursor-pointer ${
-              statusFilter === 'all' 
-                ? 'bg-white text-slate-900 shadow-2xs' 
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            الكل ({separators.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => { setStatusFilter('available'); setCurrentPage(1); }}
-            className={`px-3 py-1.5 rounded text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              statusFilter === 'available' 
-                ? 'bg-emerald-700 text-white shadow-2xs' 
-                : 'text-emerald-800 hover:bg-emerald-50'
-            }`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            <span>متاح ({separators.filter(s => s.status === 'available').length})</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => { setStatusFilter('checked_out'); setCurrentPage(1); }}
-            className={`px-3 py-1.5 rounded text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              statusFilter === 'checked_out' 
-                ? 'bg-amber-700 text-white shadow-2xs' 
-                : 'text-amber-800 hover:bg-amber-50'
-            }`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-300"></span>
-            <span>مستعار ({separators.filter(s => s.status === 'checked_out').length})</span>
-          </button>
+        {/* Status Filter Badges & Excel Quick Actions */}
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg text-xs font-medium border border-slate-200">
+            <button
+              type="button"
+              onClick={() => { setStatusFilter('all'); setCurrentPage(1); }}
+              className={`px-3 py-1.5 rounded text-xs font-bold transition-all cursor-pointer ${
+                statusFilter === 'all' 
+                  ? 'bg-white text-slate-900 shadow-2xs' 
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              الكل ({separators.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => { setStatusFilter('available'); setCurrentPage(1); }}
+              className={`px-3 py-1.5 rounded text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                statusFilter === 'available' 
+                  ? 'bg-emerald-700 text-white shadow-2xs' 
+                  : 'text-emerald-800 hover:bg-emerald-50'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>متاح ({separators.filter(s => s.status === 'available').length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setStatusFilter('checked_out'); setCurrentPage(1); }}
+              className={`px-3 py-1.5 rounded text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                statusFilter === 'checked_out' 
+                  ? 'bg-amber-700 text-white shadow-2xs' 
+                  : 'text-amber-800 hover:bg-amber-50'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-300"></span>
+              <span>مستعار ({separators.filter(s => s.status === 'checked_out').length})</span>
+            </button>
+          </div>
+
+          {(onOpenExcelModal || onOpenExportExcel) && (
+            <div className="flex items-center gap-1.5">
+              {onOpenExcelModal && (
+                <button
+                  type="button"
+                  id="table-bulk-excel-btn"
+                  onClick={onOpenExcelModal}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
+                  title="إيداع فواصل متعددة من ملف Excel"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="hidden sm:inline">إيداع إكسل</span>
+                </button>
+              )}
+              {onOpenExportExcel && (
+                <button
+                  type="button"
+                  id="table-export-excel-btn"
+                  onClick={onOpenExportExcel}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
+                  title="تصدير السجل إلى ملف Excel"
+                >
+                  <Download className="w-3.5 h-3.5 text-emerald-700" />
+                  <span className="hidden sm:inline">تصدير</span>
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
       </div>

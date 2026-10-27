@@ -19,7 +19,9 @@ import {
   Boxes,
   X,
   Pencil,
-  Edit3
+  Edit3,
+  FileSpreadsheet,
+  Download
 } from 'lucide-react';
 
 export default function ChaptersHierarchyView({
@@ -39,7 +41,9 @@ export default function ChaptersHierarchyView({
   onToggleStatus,
   onOpenQRModal,
   onOpenPrintModal,
-  onDeleteSeparator
+  onDeleteSeparator,
+  onOpenExcel,
+  onOpenExportExcel
 }) {
   const [selectedChapterId, setSelectedChapterId] = useState(chapters[0]?.id || 'ch-amn');
   const [selectedBinderId, setSelectedBinderId] = useState(null);
@@ -144,16 +148,42 @@ export default function ChaptersHierarchyView({
             </p>
           </div>
 
-          {/* Quick Action: Add Chapter */}
-          <div className="flex items-center gap-2 self-start md:self-auto shrink-0">
+          {/* Quick Actions: Excel + Add Chapter */}
+          <div className="flex flex-wrap items-center gap-2 self-start md:self-auto shrink-0">
+            {onOpenExcel && (
+              <button
+                type="button"
+                id="hierarchy-bulk-excel-btn"
+                onClick={onOpenExcel}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
+                title="إيداع فواصل متعددة من ملف إكسل بضغطة واحدة"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                <span>إيداع مجمع (Excel)</span>
+              </button>
+            )}
+
+            {onOpenExportExcel && (
+              <button
+                type="button"
+                id="hierarchy-export-excel-btn"
+                onClick={onOpenExportExcel}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
+                title="تصدير الأرشيف بالكامل إلى Excel"
+              >
+                <Download className="w-4 h-4 text-emerald-700" />
+                <span className="hidden sm:inline">تصدير إكسل</span>
+              </button>
+            )}
+
             <button
               type="button"
               id="add-chapter-top-cta"
               onClick={onOpenAddChapterModal}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
             >
               <Plus className="w-4 h-4 text-blue-400" />
-              <span>إضافة موضوع (باب) جديد</span>
+              <span>إضافة موضوع جديد</span>
             </button>
           </div>
         </div>
