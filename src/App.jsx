@@ -16,15 +16,19 @@ import ReportsView from './components/ReportsView';
 
 import { 
   getChapters,
+  subscribeToChapters,
   addChapter,
   getBinders,
+  subscribeToBinders,
   addBinder,
   getSeparators,
-  addSeparator,
   subscribeToSeparators,
+  addSeparator,
   toggleSeparatorStatus,
   deleteSeparator,
   getAuditLogs,
+  subscribeToAuditLogs,
+  subscribeToSyncStatus,
 } from './services/firebase';
 
 export default function App() {
@@ -33,6 +37,7 @@ export default function App() {
   const [separators, setSeparators] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [syncStatus, setSyncStatus] = useState('synced');
   
   // Start with hierarchy view: Chapter -> Binder -> Separator
   const [currentTab, setCurrentTab] = useState('hierarchy'); 
@@ -50,24 +55,39 @@ export default function App() {
   const [targetCheckoutItem, setTargetCheckoutItem] = useState(null);
   const [targetQRItem, setTargetQRItem] = useState(null);
 
-  // Initialize data & subscribe to sync
+  // Initialize live 2-way subscriptions to Firebase
   useEffect(() => {
-    // 1. Chapters
-    setChapters(getChapters());
+    // 1. Chapters subscription
+    const unsubChapters = subscribeToChapters((chaps) => {
+      setChapters(chaps);
+    });
 
-    // 2. Binders
-    setBinders(getBinders());
+    // 2. Binders subscription
+    const unsubBinders = subscribeToBinders((bnds) => {
+      setBinders(bnds);
+    });
 
-    // 3. Audit logs
-    setAuditLogs(getAuditLogs());
-
-    // 4. Separators subscription
-    const unsubscribe = subscribeToSeparators((seps) => {
+    // 3. Separators subscription
+    const unsubSeparators = subscribeToSeparators((seps) => {
       setSeparators(seps);
     });
 
+    // 4. Audit logs subscription
+    const unsubLogs = subscribeToAuditLogs((logs) => {
+      setAuditLogs(logs);
+    });
+
+    // 5. Cloud sync status
+    const unsubSync = subscribeToSyncStatus((status) => {
+      setSyncStatus(status);
+    });
+
     return () => {
-      if (typeof unsubscribe === 'function') unsubscribe();
+      if (typeof unsubChapters === 'function') unsubChapters();
+      if (typeof unsubBinders === 'function') unsubBinders();
+      if (typeof unsubSeparators === 'function') unsubSeparators();
+      if (typeof unsubLogs === 'function') unsubLogs();
+      if (typeof unsubSync === 'function') unsubSync();
     };
   }, []);
 
@@ -139,6 +159,7 @@ export default function App() {
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         docsCount={totalSeparators}
+        syncStatus={syncStatus}
       />
 
       {/* Main Workspace: Sidebar (Right) + Content Area (Left) */}

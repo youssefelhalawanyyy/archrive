@@ -13,7 +13,8 @@ import {
 export default function Navbar({ 
   searchQuery, 
   setSearchQuery, 
-  docsCount = 0 
+  docsCount = 0,
+  syncStatus = 'synced'
 }) {
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
@@ -124,9 +125,23 @@ export default function Navbar({
         <div className="flex items-center gap-3 shrink-0">
           
           {/* Cloud sync status tag */}
-          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-slate-600 bg-slate-100 border border-slate-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            <span>Firebase متصل</span>
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium border transition-all">
+            {syncStatus === 'saving' ? (
+              <div className="flex items-center gap-1.5 text-amber-800 bg-amber-50">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                <span className="font-bold">جاري الحفظ في Firebase...</span>
+              </div>
+            ) : syncStatus === 'offline' ? (
+              <div className="flex items-center gap-1.5 text-slate-600 bg-slate-100">
+                <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+                <span>وضع محلي (أوفلاين)</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 text-emerald-800 bg-emerald-50/80">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_#10b981]"></span>
+                <span className="font-bold">Firebase متصل • حفظ تلقائي</span>
+              </div>
+            )}
           </div>
 
           <div className="h-5 w-px bg-slate-200 hidden sm:block"></div>
@@ -157,7 +172,7 @@ export default function Navbar({
 
             {showUserMenu && (
               <div 
-                className="absolute left-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-50 animate-in fade-in slide-in-from-top-1"
+                className="absolute left-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-50 animate-in fade-in slide-in-from-top-1 font-cairo"
                 onClick={() => setShowUserMenu(false)}
               >
                 <div className="px-3.5 py-2 border-b border-slate-100">
@@ -171,6 +186,14 @@ export default function Navbar({
                     <span className="font-semibold text-slate-900">مدير كامل (Admin)</span>
                   </div>
                   <div className="px-3.5 py-1.5 flex items-center justify-between">
+                    <span>قاعدة البيانات:</span>
+                    <span className="font-bold text-emerald-700">Firebase Firestore</span>
+                  </div>
+                  <div className="px-3.5 py-1.5 flex items-center justify-between">
+                    <span>حالة المزامنة:</span>
+                    <span className="font-bold text-slate-900 font-mono text-[11px]">حفظ سحابي فوري</span>
+                  </div>
+                  <div className="px-3.5 py-1.5 flex items-center justify-between border-t border-slate-100 mt-1 pt-1.5">
                     <span>إجمالي الفواصل:</span>
                     <span className="font-bold text-slate-900">{docsCount} فاصل</span>
                   </div>

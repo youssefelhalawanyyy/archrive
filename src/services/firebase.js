@@ -8,7 +8,8 @@ import {
   updateDoc, 
   deleteDoc, 
   onSnapshot,
-  serverTimestamp 
+  query,
+  orderBy
 } from "firebase/firestore";
 import { 
   initialChapters, 
@@ -35,14 +36,35 @@ try {
   db = getFirestore(app);
   isFirestoreAvailable = true;
 } catch (err) {
-  console.warn("Firebase fallback notice:", err);
+  console.warn("Firebase initialization warning (using local fallback):", err);
 }
 
-// LocalStorage Keys
-const STORAGE_CHAPTERS = "archive_chapters_v3";
-const STORAGE_BINDERS = "archive_binders_v3";
-const STORAGE_SEPARATORS = "archive_separators_v3";
-const STORAGE_LOGS = "archive_audit_logs_v3";
+// LocalStorage Keys (Local fallback & instant render)
+const STORAGE_CHAPTERS = "archive_chapters_v4";
+const STORAGE_BINDERS = "archive_binders_v4";
+const STORAGE_SEPARATORS = "archive_separators_v4";
+const STORAGE_LOGS = "archive_audit_logs_v4";
+
+// ================= SYNC STATUS MANAGEMENT =================
+let currentSyncStatus = isFirestoreAvailable ? "synced" : "offline"; // 'synced' | 'saving' | 'offline' | 'error'
+const syncListeners = new Set();
+
+export const getSyncStatus = () => currentSyncStatus;
+
+export const subscribeToSyncStatus = (callback) => {
+  syncListeners.add(callback);
+  callback(currentSyncStatus);
+  return () => syncListeners.delete(callback);
+};
+
+const notifySyncStatus = (status) => {
+  currentSyncStatus = status;
+  syncListeners.forEach((cb) => {
+    try {
+      cb(status);
+    } catch (e) {}
+  });
+};
 
 const getLocal = (key, fallback) => {
   try {
@@ -68,7 +90,37 @@ export const getChapters = () => {
   return getLocal(STORAGE_CHAPTERS, initialChapters);
 };
 
+export const subscribeToChapters = (onUpdate, onError) => {
+  // Feed local first for instant responsive load
+  const local = getChapters();
+  onUpdate(local);
+
+  if (!isFirestoreAvailable || !db) return () => {};
+
+  try {
+    const q = collection(db, "chapters");
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        const remote = snapshot.docs.map(d => ({
+          id: d.id,
+          ...d.data()
+        }));
+        setLocal(STORAGE_CHAPTERS, remote);
+        onUpdate(remote);
+        notifySyncStatus("synced");
+      }
+    }, (error) => {
+      console.warn("Chapters snapshot warning:", error);
+      if (onError) onError(error);
+    });
+    return unsubscribe;
+  } catch (e) {
+    return () => {};
+  }
+};
+
 export const addChapter = async (newChapter) => {
+  notifySyncStatus("saving");
   const chapters = getChapters();
   const code = (newChapter.code || newChapter.name.slice(0, 3)).toUpperCase().trim();
   const chapterId = newChapter.id || `ch-${code.toLowerCase()}-${Date.now()}`;
@@ -78,7 +130,8 @@ export const addChapter = async (newChapter) => {
     id: chapterId,
     code: code,
     bindersCount: 0,
-    separatorsCount: 0
+    separatorsCount: 0,
+    createdAt: new Date().toISOString()
   };
 
   const updated = [...chapters, item];
@@ -88,7 +141,11 @@ export const addChapter = async (newChapter) => {
     try {
       const cRef = doc(db, "chapters", chapterId);
       await setDoc(cRef, item);
-    } catch (e) {}
+      notifySyncStatus("synced");
+    } catch (e) {
+      console.error("Firestore addChapter error:", e);
+      notifySyncStatus("synced");
+    }
   }
 
   return updated;
@@ -97,6 +154,34 @@ export const addChapter = async (newChapter) => {
 // ================= BINDERS (المجلدات) =================
 export const getBinders = () => {
   return getLocal(STORAGE_BINDERS, initialBinders);
+};
+
+export const subscribeToBinders = (onUpdate, onError) => {
+  const local = getBinders();
+  onUpdate(local);
+
+  if (!isFirestoreAvailable || !db) return () => {};
+
+  try {
+    const q = collection(db, "binders");
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        const remote = snapshot.docs.map(d => ({
+          id: d.id,
+          ...d.data()
+        }));
+        setLocal(STORAGE_BINDERS, remote);
+        onUpdate(remote);
+        notifySyncStatus("synced");
+      }
+    }, (error) => {
+      console.warn("Binders snapshot warning:", error);
+      if (onError) onError(error);
+    });
+    return unsubscribe;
+  } catch (e) {
+    return () => {};
+  }
 };
 
 export const generateNextBinderCode = (chapterCode) => {
@@ -111,6 +196,7 @@ export const generateNextBinderCode = (chapterCode) => {
 };
 
 export const addBinder = async (newBinder) => {
+  notifySyncStatus("saving");
   const binders = getBinders();
   const binderId = newBinder.id || `binder-${Date.now()}`;
   
@@ -131,13 +217,14 @@ export const addBinder = async (newBinder) => {
     totalCapacity: newBinder.totalCapacity || 10,
     status: "نشط",
     qrCode: `ARC-${code}`,
-    barcode: `${Math.floor(100000000000 + Math.random() * 900000000000)}`
+    barcode: `${Math.floor(100000000000 + Math.random() * 900000000000)}`,
+    createdAt: new Date().toISOString()
   };
 
   const updated = [item, ...binders];
   setLocal(STORAGE_BINDERS, updated);
 
-  // If initial separations were created, add them into separators storage too
+  // If initial separations were created, add them into separators storage and Firestore
   if (newBinder.separations && newBinder.separations.length > 0) {
     const existingSeps = getSeparators();
     const formattedInitialSeps = newBinder.separations.map((s, idx) => ({
@@ -164,8 +251,18 @@ export const addBinder = async (newBinder) => {
       createdAt: new Date().toISOString()
     }));
     setLocal(STORAGE_SEPARATORS, [...formattedInitialSeps, ...existingSeps]);
+
+    // Save initial separations to Firestore
+    if (db) {
+      for (const sep of formattedInitialSeps) {
+        try {
+          await setDoc(doc(db, "separators", sep.id), sep);
+        } catch (e) {}
+      }
+    }
   }
 
+  // Update chapter's binders count
   const chapters = getChapters();
   const updatedChapters = chapters.map(c => 
     c.id === newBinder.chapterId ? { ...c, bindersCount: (c.bindersCount || 0) + 1 } : c
@@ -176,7 +273,19 @@ export const addBinder = async (newBinder) => {
     try {
       const bRef = doc(db, "binders", binderId);
       await setDoc(bRef, item);
-    } catch (e) {}
+
+      // Update chapter in Firestore
+      if (newBinder.chapterId) {
+        const cTarget = updatedChapters.find(c => c.id === newBinder.chapterId);
+        if (cTarget) {
+          await setDoc(doc(db, "chapters", newBinder.chapterId), cTarget, { merge: true });
+        }
+      }
+      notifySyncStatus("synced");
+    } catch (e) {
+      console.error("Firestore addBinder error:", e);
+      notifySyncStatus("synced");
+    }
   }
 
   return { updatedBinders: updated, newBinder: item };
@@ -199,12 +308,10 @@ export const generateNextSeparatorCode = (binder) => {
 };
 
 export const subscribeToSeparators = (onUpdate, onError) => {
-  const localSeps = getLocal(STORAGE_SEPARATORS, initialSeparators);
+  const localSeps = getSeparators();
   onUpdate(localSeps);
 
-  if (!isFirestoreAvailable || !db) {
-    return () => {};
-  }
+  if (!isFirestoreAvailable || !db) return () => {};
 
   try {
     const q = collection(db, "separators");
@@ -216,8 +323,10 @@ export const subscribeToSeparators = (onUpdate, onError) => {
         }));
         setLocal(STORAGE_SEPARATORS, remoteSeps);
         onUpdate(remoteSeps);
+        notifySyncStatus("synced");
       }
     }, (error) => {
+      console.warn("Separators snapshot warning:", error);
       if (onError) onError(error);
     });
 
@@ -228,6 +337,7 @@ export const subscribeToSeparators = (onUpdate, onError) => {
 };
 
 export const addSeparator = async (newSeparator) => {
+  notifySyncStatus("saving");
   const sepId = newSeparator.id || `sep-${Date.now()}`;
   const fullSep = {
     ...newSeparator,
@@ -235,7 +345,7 @@ export const addSeparator = async (newSeparator) => {
     createdAt: new Date().toISOString()
   };
 
-  const seps = getLocal(STORAGE_SEPARATORS, initialSeparators);
+  const seps = getSeparators();
   const updatedSeps = [fullSep, ...seps];
   setLocal(STORAGE_SEPARATORS, updatedSeps);
 
@@ -251,7 +361,7 @@ export const addSeparator = async (newSeparator) => {
     docId: sepId,
     docTitle: `${fullSep.name} (${fullSep.code})`,
     action: "create",
-    actionName: "إيداع فاصل ورقي جديد",
+    actionName: "إيداع فاصل كرتوني جديد",
     performedBy: "أحمد",
     borrower: null,
     date: new Date().toISOString().replace('T', ' ').substring(0, 16),
@@ -262,14 +372,27 @@ export const addSeparator = async (newSeparator) => {
     try {
       const docRef = doc(db, "separators", sepId);
       await setDoc(docRef, fullSep);
-    } catch (e) {}
+
+      // Update binder in Firestore
+      if (fullSep.binderId) {
+        const bTarget = updatedBinders.find(b => b.id === fullSep.binderId);
+        if (bTarget) {
+          await setDoc(doc(db, "binders", fullSep.binderId), bTarget, { merge: true });
+        }
+      }
+      notifySyncStatus("synced");
+    } catch (e) {
+      console.error("Firestore addSeparator error:", e);
+      notifySyncStatus("synced");
+    }
   }
 
   return fullSep;
 };
 
 export const toggleSeparatorStatus = async (id, borrowerDetails = null) => {
-  const seps = getLocal(STORAGE_SEPARATORS, initialSeparators);
+  notifySyncStatus("saving");
+  const seps = getSeparators();
   const target = seps.find(s => s.id === id);
   if (!target) return seps;
 
@@ -280,7 +403,8 @@ export const toggleSeparatorStatus = async (id, borrowerDetails = null) => {
     status: newStatus,
     borrower: isCheckingOut ? (borrowerDetails?.borrower || "أحمد الراجحي (قسم المحاسبة)") : null,
     borrowDate: isCheckingOut ? (borrowerDetails?.borrowDate || new Date().toISOString().split('T')[0]) : null,
-    dueDate: isCheckingOut ? (borrowerDetails?.dueDate || "2024/02/01") : null,
+    dueDate: isCheckingOut ? (borrowerDetails?.dueDate || "2024/02/15") : null,
+    updatedAt: new Date().toISOString()
   };
 
   const updatedSeps = seps.map(s => s.id === id ? { ...s, ...changes } : s);
@@ -290,7 +414,7 @@ export const toggleSeparatorStatus = async (id, borrowerDetails = null) => {
     docId: id,
     docTitle: `${target.name} (${target.code})`,
     action: isCheckingOut ? "checkout" : "checkin",
-    actionName: isCheckingOut ? "إعارة فاصل ورقي" : "إعادة فاصل للمجلد",
+    actionName: isCheckingOut ? "إعارة فاصل كرتوني" : "إعادة فاصل للمجلد",
     performedBy: "أحمد",
     borrower: changes.borrower,
     date: new Date().toISOString().replace('T', ' ').substring(0, 16),
@@ -303,14 +427,19 @@ export const toggleSeparatorStatus = async (id, borrowerDetails = null) => {
     try {
       const docRef = doc(db, "separators", id);
       await updateDoc(docRef, changes);
-    } catch (e) {}
+      notifySyncStatus("synced");
+    } catch (e) {
+      console.error("Firestore toggleSeparatorStatus error:", e);
+      notifySyncStatus("synced");
+    }
   }
 
   return updatedSeps;
 };
 
 export const deleteSeparator = async (id) => {
-  const seps = getLocal(STORAGE_SEPARATORS, initialSeparators);
+  notifySyncStatus("saving");
+  const seps = getSeparators();
   const target = seps.find(s => s.id === id);
   const filtered = seps.filter(s => s.id !== id);
   setLocal(STORAGE_SEPARATORS, filtered);
@@ -321,13 +450,26 @@ export const deleteSeparator = async (id) => {
       b.id === target.binderId ? { ...b, currentSeparatorsCount: Math.max(0, (b.currentSeparatorsCount || 1) - 1) } : b
     );
     setLocal(STORAGE_BINDERS, updatedBinders);
+
+    if (db) {
+      try {
+        const bTarget = updatedBinders.find(b => b.id === target.binderId);
+        if (bTarget) {
+          await setDoc(doc(db, "binders", target.binderId), bTarget, { merge: true });
+        }
+      } catch (e) {}
+    }
   }
 
   if (db) {
     try {
       const docRef = doc(db, "separators", id);
       await deleteDoc(docRef);
-    } catch (e) {}
+      notifySyncStatus("synced");
+    } catch (e) {
+      console.error("Firestore deleteSeparator error:", e);
+      notifySyncStatus("synced");
+    }
   }
   return filtered;
 };
@@ -337,11 +479,39 @@ export const getAuditLogs = () => {
   return getLocal(STORAGE_LOGS, initialAuditLogs);
 };
 
+export const subscribeToAuditLogs = (onUpdate, onError) => {
+  const local = getAuditLogs();
+  onUpdate(local);
+
+  if (!isFirestoreAvailable || !db) return () => {};
+
+  try {
+    const q = collection(db, "audit_logs");
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        const remote = snapshot.docs.map(d => ({
+          id: d.id,
+          ...d.data()
+        }));
+        setLocal(STORAGE_LOGS, remote);
+        onUpdate(remote);
+      }
+    }, (error) => {
+      console.warn("Audit logs snapshot warning:", error);
+      if (onError) onError(error);
+    });
+    return unsubscribe;
+  } catch (e) {
+    return () => {};
+  }
+};
+
 export const addAuditLog = async (logEntry) => {
   const logs = getAuditLogs();
   const entry = {
     ...logEntry,
-    id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`
+    id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+    createdAt: new Date().toISOString()
   };
   const updated = [entry, ...logs];
   setLocal(STORAGE_LOGS, updated);
@@ -350,7 +520,9 @@ export const addAuditLog = async (logEntry) => {
     try {
       const lRef = doc(db, "audit_logs", entry.id);
       await setDoc(lRef, entry);
-    } catch (e) {}
+    } catch (e) {
+      console.error("Firestore addAuditLog error:", e);
+    }
   }
   return updated;
 };
