@@ -7,8 +7,12 @@ import InstallPWABanner from './components/InstallPWABanner';
 import DocumentsTable from './components/DocumentsTable';
 import ChaptersHierarchyView from './components/ChaptersHierarchyView';
 import AddChapterModal from './components/AddChapterModal';
+import EditChapterModal from './components/EditChapterModal';
 import AddBinderModal from './components/AddBinderModal';
+import EditBinderModal from './components/EditBinderModal';
 import AddSeparationModal from './components/AddSeparationModal';
+import EditSeparationModal from './components/EditSeparationModal';
+import DeleteConfirmModal from './components/DeleteConfirmModal';
 import CheckoutModal from './components/CheckoutModal';
 import QRModal from './components/QRModal';
 import SpineLabelModal from './components/SpineLabelModal';
@@ -19,12 +23,17 @@ import {
   getChapters,
   subscribeToChapters,
   addChapter,
+  updateChapter,
+  deleteChapter,
   getBinders,
   subscribeToBinders,
   addBinder,
+  updateBinder,
+  deleteBinder,
   getSeparators,
   subscribeToSeparators,
   addSeparator,
+  updateSeparator,
   toggleSeparatorStatus,
   deleteSeparator,
   getAuditLogs,
@@ -47,13 +56,32 @@ export default function App() {
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isInstallTriggered, setIsInstallTriggered] = useState(false);
 
-  // Modals state
+  // Add Modals state
   const [isAddChapterModalOpen, setIsAddChapterModalOpen] = useState(false);
   const [isAddBinderModalOpen, setIsAddBinderModalOpen] = useState(false);
   const [isAddSeparationModalOpen, setIsAddSeparationModalOpen] = useState(false);
   const [targetBinderForSeparation, setTargetBinderForSeparation] = useState(null);
   const [targetChapterForBinder, setTargetChapterForBinder] = useState(null);
 
+  // Edit Modals state
+  const [isEditChapterModalOpen, setIsEditChapterModalOpen] = useState(false);
+  const [targetChapterForEdit, setTargetChapterForEdit] = useState(null);
+
+  const [isEditBinderModalOpen, setIsEditBinderModalOpen] = useState(false);
+  const [targetBinderForEdit, setTargetBinderForEdit] = useState(null);
+
+  const [isEditSeparationModalOpen, setIsEditSeparationModalOpen] = useState(false);
+  const [targetSeparationForEdit, setTargetSeparationForEdit] = useState(null);
+
+  // Delete Confirmation Modal state
+  const [deleteModalState, setDeleteModalState] = useState({
+    isOpen: false,
+    type: 'separator', // 'chapter' | 'binder' | 'separator'
+    item: null,
+    childCount: 0
+  });
+
+  // Action Modals state
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
@@ -128,20 +156,66 @@ export default function App() {
     setAuditLogs(getAuditLogs());
   };
 
-  // Add Chapter
+  // ================= CHAPTERS CRUD =================
   const handleAddChapter = async (newChapter) => {
     const updated = await addChapter(newChapter);
     setChapters(updated);
   };
 
-  // Add Binder
+  const handleOpenEditChapter = (chapter) => {
+    setTargetChapterForEdit(chapter);
+    setIsEditChapterModalOpen(true);
+  };
+
+  const handleUpdateChapter = async (id, updatedFields) => {
+    const updated = await updateChapter(id, updatedFields);
+    setChapters(updated);
+    setBinders(getBinders());
+    setSeparators(getSeparators());
+    setAuditLogs(getAuditLogs());
+  };
+
+  const handleOpenDeleteChapter = (chapter) => {
+    const childBindersCount = binders.filter(b => b.chapterId === chapter.id || b.chapterCode === chapter.code).length;
+    setDeleteModalState({
+      isOpen: true,
+      type: 'chapter',
+      item: chapter,
+      childCount: childBindersCount
+    });
+  };
+
+  // ================= BINDERS CRUD =================
   const handleAddBinder = async (binderData) => {
     const { updatedBinders } = await addBinder(binderData);
     setBinders(updatedBinders);
     setChapters(getChapters());
   };
 
-  // Add Separator
+  const handleOpenEditBinder = (binder) => {
+    setTargetBinderForEdit(binder);
+    setIsEditBinderModalOpen(true);
+  };
+
+  const handleUpdateBinder = async (id, updatedFields) => {
+    const updated = await updateBinder(id, updatedFields);
+    setBinders(updated);
+    setSeparators(getSeparators());
+    setChapters(getChapters());
+    setAuditLogs(getAuditLogs());
+  };
+
+  const handleOpenDeleteBinder = (binder) => {
+    const childSepsCount = separators.filter(s => s.binderId === binder.id || s.binderCode === binder.code).length;
+    setDeleteModalState({
+      isOpen: true,
+      type: 'binder',
+      item: binder,
+      childCount: childSepsCount
+    });
+  };
+
+  // ================= SEPARATORS CRUD =================
   const handleAddSeparator = async (sepData) => {
     await addSeparator(sepData);
     setSeparators(getSeparators());
@@ -149,9 +223,42 @@ export default function App() {
     setAuditLogs(getAuditLogs());
   };
 
-  // Delete Separator
-  const handleDeleteSeparator = async (id) => {
-    if (window.confirm("هل أنت متأكد من رغبتك في حذف هذا الفاصل من سجل الأرشيف؟")) {
+  const handleOpenEditSeparation = (sep) => {
+    setTargetSeparationForEdit(sep);
+    setIsEditSeparationModalOpen(true);
+  };
+
+  const handleUpdateSeparator = async (id, updatedFields) => {
+    const updated = await updateSeparator(id, updatedFields);
+    setSeparators(updated);
+    setBinders(getBinders());
+    setAuditLogs(getAuditLogs());
+  };
+
+  const handleOpenDeleteSeparation = (sep) => {
+    setDeleteModalState({
+      isOpen: true,
+      type: 'separator',
+      item: sep,
+      childCount: 0
+    });
+  };
+
+  // Generic Confirm Delete Callback
+  const handleConfirmDelete = async (id) => {
+    if (deleteModalState.type === 'chapter') {
+      const updated = await deleteChapter(id);
+      setChapters(updated);
+      setBinders(getBinders());
+      setSeparators(getSeparators());
+      setAuditLogs(getAuditLogs());
+    } else if (deleteModalState.type === 'binder') {
+      const updated = await deleteBinder(id);
+      setBinders(updated);
+      setSeparators(getSeparators());
+      setChapters(getChapters());
+      setAuditLogs(getAuditLogs());
+    } else if (deleteModalState.type === 'separator') {
       const updated = await deleteSeparator(id);
       setSeparators(updated);
       setBinders(getBinders());
@@ -224,18 +331,26 @@ export default function App() {
               globalSearchQuery={searchQuery}
               setGlobalSearchQuery={setSearchQuery}
               onOpenAddChapterModal={() => setIsAddChapterModalOpen(true)}
+              onOpenEditChapterModal={handleOpenEditChapter}
+              onOpenDeleteChapterModal={handleOpenDeleteChapter}
               onOpenAddBinderModal={(chapterId) => {
                 setTargetChapterForBinder(chapterId);
                 setIsAddBinderModalOpen(true);
               }}
+              onOpenEditBinderModal={handleOpenEditBinder}
+              onOpenDeleteBinderModal={handleOpenDeleteBinder}
               onOpenAddSeparationModal={(binder) => {
                 setTargetBinderForSeparation(binder);
                 setIsAddSeparationModalOpen(true);
               }}
+              onOpenEditSeparationModal={handleOpenEditSeparation}
               onToggleStatus={handleOpenStatusToggle}
               onOpenQRModal={handleOpenQRModal}
               onOpenPrintModal={handleOpenPrintModal}
-              onDeleteSeparator={handleDeleteSeparator}
+              onDeleteSeparator={(sepId) => {
+                const target = separators.find(s => s.id === sepId);
+                if (target) handleOpenDeleteSeparation(target);
+              }}
             />
           )}
 
@@ -317,7 +432,11 @@ export default function App() {
                 onToggleStatus={handleOpenStatusToggle}
                 onOpenQRModal={handleOpenQRModal}
                 onOpenPrintModal={handleOpenPrintModal}
-                onDeleteSeparator={handleDeleteSeparator}
+                onOpenEditSeparationModal={handleOpenEditSeparation}
+                onDeleteSeparator={(sepId) => {
+                  const target = separators.find(s => s.id === sepId);
+                  if (target) handleOpenDeleteSeparation(target);
+                }}
               />
 
             </div>
@@ -331,6 +450,8 @@ export default function App() {
               onSelectBinder={() => setCurrentTab('hierarchy')}
               onOpenQRModal={(b) => handleOpenQRModal(b)}
               onOpenPrintModal={(b) => handleOpenPrintModal(b)}
+              onOpenEditBinderModal={handleOpenEditBinder}
+              onOpenDeleteBinderModal={handleOpenDeleteBinder}
             />
           )}
 
@@ -363,13 +484,24 @@ export default function App() {
         onCloseManual={() => setIsInstallTriggered(false)}
       />
 
-      {/* Global Modals */}
+      {/* Modals: Chapters */}
       <AddChapterModal
         isOpen={isAddChapterModalOpen}
         onClose={() => setIsAddChapterModalOpen(false)}
         onAddChapter={handleAddChapter}
       />
 
+      <EditChapterModal
+        isOpen={isEditChapterModalOpen}
+        onClose={() => {
+          setIsEditChapterModalOpen(false);
+          setTargetChapterForEdit(null);
+        }}
+        chapter={targetChapterForEdit}
+        onUpdateChapter={handleUpdateChapter}
+      />
+
+      {/* Modals: Binders */}
       <AddBinderModal
         isOpen={isAddBinderModalOpen}
         onClose={() => setIsAddBinderModalOpen(false)}
@@ -378,6 +510,18 @@ export default function App() {
         onAddBinder={handleAddBinder}
       />
 
+      <EditBinderModal
+        isOpen={isEditBinderModalOpen}
+        onClose={() => {
+          setIsEditBinderModalOpen(false);
+          setTargetBinderForEdit(null);
+        }}
+        binder={targetBinderForEdit}
+        chapters={chapters}
+        onUpdateBinder={handleUpdateBinder}
+      />
+
+      {/* Modals: Separators */}
       <AddSeparationModal
         isOpen={isAddSeparationModalOpen}
         onClose={() => {
@@ -390,6 +534,28 @@ export default function App() {
         onAddSeparator={handleAddSeparator}
       />
 
+      <EditSeparationModal
+        isOpen={isEditSeparationModalOpen}
+        onClose={() => {
+          setIsEditSeparationModalOpen(false);
+          setTargetSeparationForEdit(null);
+        }}
+        separator={targetSeparationForEdit}
+        binders={binders}
+        onUpdateSeparator={handleUpdateSeparator}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModalState.isOpen}
+        onClose={() => setDeleteModalState(prev => ({ ...prev, isOpen: false, item: null }))}
+        onConfirm={handleConfirmDelete}
+        type={deleteModalState.type}
+        item={deleteModalState.item}
+        childCount={deleteModalState.childCount}
+      />
+
+      {/* Operational Modals */}
       <CheckoutModal
         isOpen={isCheckoutModalOpen}
         onClose={() => setIsCheckoutModalOpen(false)}

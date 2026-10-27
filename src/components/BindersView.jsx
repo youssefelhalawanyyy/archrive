@@ -11,7 +11,9 @@ import {
   FolderKanban, 
   CheckCircle2, 
   Barcode,
-  Sparkles
+  Sparkles,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 
 export default function BindersView({ 
@@ -20,7 +22,9 @@ export default function BindersView({
   documents = [],
   onSelectBinder, 
   onOpenQRModal, 
-  onOpenPrintModal 
+  onOpenPrintModal,
+  onOpenEditBinderModal,
+  onOpenDeleteBinderModal
 }) {
   const [shelfFilter, setShelfFilter] = useState('all');
   const [search, setSearch] = useState('');
@@ -145,14 +149,23 @@ export default function BindersView({
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
+              <div className="pt-3 border-t border-slate-100 flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => onSelectBinder(binder)}
-                  className="flex-1 py-2 px-3 rounded-xl bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="flex-1 py-2 px-2.5 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <FileText className="w-3.5 h-3.5" />
-                  <span>تصفح الوثائق</span>
+                  <span>تصفح الفواصل</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onOpenEditBinderModal && onOpenEditBinderModal(binder)}
+                  title="تعديل بيانات المجلد"
+                  className="p-2 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-600 transition-colors cursor-pointer"
+                >
+                  <Pencil className="w-4 h-4" />
                 </button>
 
                 <button
@@ -171,6 +184,15 @@ export default function BindersView({
                   className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
                 >
                   <Printer className="w-4 h-4" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onOpenDeleteBinderModal && onOpenDeleteBinderModal(binder)}
+                  title="حذف هذا المجلد وفواصله"
+                  className="p-2 rounded-xl bg-slate-100 hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
 

@@ -151,6 +151,138 @@ export const addChapter = async (newChapter) => {
   return updated;
 };
 
+export const updateChapter = async (id, updatedFields) => {
+  notifySyncStatus("saving");
+  const chapters = getChapters();
+  const existing = chapters.find(c => c.id === id);
+  if (!existing) return chapters;
+
+  const code = (updatedFields.code || existing.code).toUpperCase().trim();
+  const item = {
+    ...existing,
+    ...updatedFields,
+    code,
+    updatedAt: new Date().toISOString()
+  };
+
+  const updatedChapters = chapters.map(c => c.id === id ? item : c);
+  setLocal(STORAGE_CHAPTERS, updatedChapters);
+
+  // If chapter code or name changed, cascade to child binders and child separators
+  const nameChanged = updatedFields.name && updatedFields.name !== existing.name;
+  const codeChanged = code !== existing.code;
+  if (nameChanged || codeChanged) {
+    const binders = getBinders();
+    const updatedBinders = binders.map(b => {
+      if (b.chapterId === id || b.chapterCode === existing.code) {
+        return {
+          ...b,
+          chapterName: item.name,
+          chapterCode: item.code
+        };
+      }
+      return b;
+    });
+    setLocal(STORAGE_BINDERS, updatedBinders);
+
+    const seps = getSeparators();
+    const updatedSeps = seps.map(s => {
+      if (s.chapterId === id || s.chapterCode === existing.code) {
+        return {
+          ...s,
+          chapterName: item.name,
+          chapterCode: item.code
+        };
+      }
+      return s;
+    });
+    setLocal(STORAGE_SEPARATORS, updatedSeps);
+
+    if (db) {
+      for (const b of updatedBinders.filter(b => b.chapterId === id || b.chapterCode === existing.code)) {
+        try { await setDoc(doc(db, "binders", b.id), b, { merge: true }); } catch (e) {}
+      }
+      for (const s of updatedSeps.filter(s => s.chapterId === id || s.chapterCode === existing.code)) {
+        try { await setDoc(doc(db, "separators", s.id), s, { merge: true }); } catch (e) {}
+      }
+    }
+  }
+
+  if (db) {
+    try {
+      await setDoc(doc(db, "chapters", id), item, { merge: true });
+      notifySyncStatus("synced");
+    } catch (e) {
+      console.error("Firestore updateChapter error:", e);
+      notifySyncStatus("synced");
+    }
+  }
+
+  await addAuditLog({
+    docId: id,
+    docTitle: `موضوع: ${item.name} (${item.code})`,
+    action: "update",
+    actionName: "تعديل بيانات موضوع",
+    performedBy: "أحمد",
+    borrower: null,
+    date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+    reason: `تم تحديث بيانات الموضوع والتصنيف`
+  });
+
+  return updatedChapters;
+};
+
+export const deleteChapter = async (id) => {
+  notifySyncStatus("saving");
+  const chapters = getChapters();
+  const target = chapters.find(c => c.id === id);
+  if (!target) return chapters;
+
+  const filteredChapters = chapters.filter(c => c.id !== id);
+  setLocal(STORAGE_CHAPTERS, filteredChapters);
+
+  // Find child binders and child separators to cascade delete
+  const binders = getBinders();
+  const childBinders = binders.filter(b => b.chapterId === id || b.chapterCode === target.code);
+  const remainingBinders = binders.filter(b => b.chapterId !== id && b.chapterCode !== target.code);
+  setLocal(STORAGE_BINDERS, remainingBinders);
+
+  const childBinderIds = new Set(childBinders.map(b => b.id));
+  const seps = getSeparators();
+  const childSeps = seps.filter(s => s.chapterId === id || childBinderIds.has(s.binderId));
+  const remainingSeps = seps.filter(s => s.chapterId !== id && !childBinderIds.has(s.binderId));
+  setLocal(STORAGE_SEPARATORS, remainingSeps);
+
+  if (db) {
+    try {
+      await deleteDoc(doc(db, "chapters", id));
+      for (const b of childBinders) {
+        try { await deleteDoc(doc(db, "binders", b.id)); } catch (e) {}
+      }
+      for (const s of childSeps) {
+        try { await deleteDoc(doc(db, "separators", s.id)); } catch (e) {}
+      }
+      notifySyncStatus("synced");
+    } catch (e) {
+      console.error("Firestore deleteChapter error:", e);
+      notifySyncStatus("synced");
+    }
+  }
+
+  await addAuditLog({
+    docId: id,
+    docTitle: `موضوع: ${target.name} (${target.code})`,
+    action: "delete",
+    actionName: "حذف موضوع كامل ومجلداته",
+    performedBy: "أحمد",
+    borrower: null,
+    date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+    reason: `تم حذف الموضوع (${target.name}) مع عدد ${childBinders.length} مجلدات و ${childSeps.length} فواصل`
+  });
+
+  return filteredChapters;
+};
+
 // ================= BINDERS (المجلدات) =================
 export const getBinders = () => {
   return getLocal(STORAGE_BINDERS, initialBinders);
@@ -289,6 +421,154 @@ export const addBinder = async (newBinder) => {
   }
 
   return { updatedBinders: updated, newBinder: item };
+};
+
+export const updateBinder = async (id, updatedFields) => {
+  notifySyncStatus("saving");
+  const binders = getBinders();
+  const existing = binders.find(b => b.id === id);
+  if (!existing) return binders;
+
+  const item = {
+    ...existing,
+    ...updatedFields,
+    updatedAt: new Date().toISOString()
+  };
+
+  const updatedBinders = binders.map(b => b.id === id ? item : b);
+  setLocal(STORAGE_BINDERS, updatedBinders);
+
+  // If cabinet, shelf, name, code, or chapter changed, cascade to child separators
+  const seps = getSeparators();
+  const childSeps = seps.filter(s => s.binderId === id);
+  if (childSeps.length > 0) {
+    const updatedSeps = seps.map(s => {
+      if (s.binderId === id) {
+        return {
+          ...s,
+          binderName: item.name,
+          binderCode: item.code,
+          cabinet: item.cabinet,
+          shelf: item.shelf,
+          location: `${item.cabinet} - ${item.shelf}`,
+          chapterId: item.chapterId || s.chapterId,
+          chapterName: item.chapterName || s.chapterName,
+          chapterCode: item.chapterCode || s.chapterCode
+        };
+      }
+      return s;
+    });
+    setLocal(STORAGE_SEPARATORS, updatedSeps);
+
+    if (db) {
+      for (const s of updatedSeps.filter(s => s.binderId === id)) {
+        try { await setDoc(doc(db, "separators", s.id), s, { merge: true }); } catch (e) {}
+      }
+    }
+  }
+
+  // If chapter changed, update bindersCount on both old and new chapters
+  if (updatedFields.chapterId && updatedFields.chapterId !== existing.chapterId) {
+    const chapters = getChapters();
+    const updatedChapters = chapters.map(c => {
+      if (c.id === existing.chapterId) {
+        return { ...c, bindersCount: Math.max(0, (c.bindersCount || 1) - 1) };
+      }
+      if (c.id === updatedFields.chapterId) {
+        return { ...c, bindersCount: (c.bindersCount || 0) + 1 };
+      }
+      return c;
+    });
+    setLocal(STORAGE_CHAPTERS, updatedChapters);
+    if (db) {
+      try {
+        const oldC = updatedChapters.find(c => c.id === existing.chapterId);
+        const newC = updatedChapters.find(c => c.id === updatedFields.chapterId);
+        if (oldC) await setDoc(doc(db, "chapters", oldC.id), oldC, { merge: true });
+        if (newC) await setDoc(doc(db, "chapters", newC.id), newC, { merge: true });
+      } catch (e) {}
+    }
+  }
+
+  if (db) {
+    try {
+      await setDoc(doc(db, "binders", id), item, { merge: true });
+      notifySyncStatus("synced");
+    } catch (e) {
+      console.error("Firestore updateBinder error:", e);
+      notifySyncStatus("synced");
+    }
+  }
+
+  await addAuditLog({
+    docId: id,
+    docTitle: `مجلد: ${item.name} (${item.code})`,
+    action: "update",
+    actionName: "تعديل بيانات مجلد",
+    performedBy: "أحمد",
+    borrower: null,
+    date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+    reason: `تم تعديل بيانات المجلد والموقع الميداني (${item.cabinet} • ${item.shelf})`
+  });
+
+  return updatedBinders;
+};
+
+export const deleteBinder = async (id) => {
+  notifySyncStatus("saving");
+  const binders = getBinders();
+  const target = binders.find(b => b.id === id);
+  if (!target) return binders;
+
+  const filteredBinders = binders.filter(b => b.id !== id);
+  setLocal(STORAGE_BINDERS, filteredBinders);
+
+  // Cascade delete all separators inside this binder
+  const seps = getSeparators();
+  const childSeps = seps.filter(s => s.binderId === id);
+  const remainingSeps = seps.filter(s => s.binderId !== id);
+  setLocal(STORAGE_SEPARATORS, remainingSeps);
+
+  // Decrement chapter's bindersCount
+  if (target.chapterId) {
+    const chapters = getChapters();
+    const updatedChapters = chapters.map(c => 
+      c.id === target.chapterId ? { ...c, bindersCount: Math.max(0, (c.bindersCount || 1) - 1) } : c
+    );
+    setLocal(STORAGE_CHAPTERS, updatedChapters);
+    if (db) {
+      try {
+        const cTarget = updatedChapters.find(c => c.id === target.chapterId);
+        if (cTarget) await setDoc(doc(db, "chapters", target.chapterId), cTarget, { merge: true });
+      } catch (e) {}
+    }
+  }
+
+  if (db) {
+    try {
+      await deleteDoc(doc(db, "binders", id));
+      for (const s of childSeps) {
+        try { await deleteDoc(doc(db, "separators", s.id)); } catch (e) {}
+      }
+      notifySyncStatus("synced");
+    } catch (e) {
+      console.error("Firestore deleteBinder error:", e);
+      notifySyncStatus("synced");
+    }
+  }
+
+  await addAuditLog({
+    docId: id,
+    docTitle: `مجلد: ${target.name} (${target.code})`,
+    action: "delete",
+    actionName: "حذف مجلد فيزيائي وفواصله",
+    performedBy: "أحمد",
+    borrower: null,
+    date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+    reason: `تم حذف المجلد (${target.name}) مع عدد ${childSeps.length} فواصل تابعة له`
+  });
+
+  return filteredBinders;
 };
 
 // ================= SEPARATORS (الفواصل داخل المجلدات) =================
@@ -433,6 +713,86 @@ export const toggleSeparatorStatus = async (id, borrowerDetails = null) => {
       notifySyncStatus("synced");
     }
   }
+
+  return updatedSeps;
+};
+
+export const updateSeparator = async (id, updatedFields) => {
+  notifySyncStatus("saving");
+  const seps = getSeparators();
+  const existing = seps.find(s => s.id === id);
+  if (!existing) return seps;
+
+  let targetBinder = null;
+  if (updatedFields.binderId && updatedFields.binderId !== existing.binderId) {
+    const binders = getBinders();
+    targetBinder = binders.find(b => b.id === updatedFields.binderId);
+  }
+
+  const item = {
+    ...existing,
+    ...updatedFields,
+    ...(targetBinder ? {
+      binderId: targetBinder.id,
+      binderName: targetBinder.name,
+      binderCode: targetBinder.code,
+      chapterId: targetBinder.chapterId,
+      chapterName: targetBinder.chapterName,
+      chapterCode: targetBinder.chapterCode,
+      cabinet: targetBinder.cabinet,
+      shelf: targetBinder.shelf,
+      location: `${targetBinder.cabinet} - ${targetBinder.shelf}`
+    } : {}),
+    updatedAt: new Date().toISOString()
+  };
+
+  const updatedSeps = seps.map(s => s.id === id ? item : s);
+  setLocal(STORAGE_SEPARATORS, updatedSeps);
+
+  // If binder was changed, update counts on old and new binders
+  if (targetBinder && existing.binderId !== targetBinder.id) {
+    const binders = getBinders();
+    const updatedBinders = binders.map(b => {
+      if (b.id === existing.binderId) {
+        return { ...b, currentSeparatorsCount: Math.max(0, (b.currentSeparatorsCount || 1) - 1) };
+      }
+      if (b.id === targetBinder.id) {
+        return { ...b, currentSeparatorsCount: (b.currentSeparatorsCount || 0) + 1 };
+      }
+      return b;
+    });
+    setLocal(STORAGE_BINDERS, updatedBinders);
+
+    if (db) {
+      try {
+        const oldB = updatedBinders.find(b => b.id === existing.binderId);
+        const newB = updatedBinders.find(b => b.id === targetBinder.id);
+        if (oldB) await setDoc(doc(db, "binders", oldB.id), oldB, { merge: true });
+        if (newB) await setDoc(doc(db, "binders", newB.id), newB, { merge: true });
+      } catch (e) {}
+    }
+  }
+
+  if (db) {
+    try {
+      await setDoc(doc(db, "separators", id), item, { merge: true });
+      notifySyncStatus("synced");
+    } catch (e) {
+      console.error("Firestore updateSeparator error:", e);
+      notifySyncStatus("synced");
+    }
+  }
+
+  await addAuditLog({
+    docId: id,
+    docTitle: `${item.name} (${item.code})`,
+    action: "update",
+    actionName: "تعديل بيانات فاصل كرتوني",
+    performedBy: "أحمد",
+    borrower: null,
+    date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+    reason: `تم تحديث بيانات الفاصل (عدد الأوراق: ${item.papersCount}، المجلد: ${item.binderName})`
+  });
 
   return updatedSeps;
 };

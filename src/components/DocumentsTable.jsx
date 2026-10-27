@@ -11,7 +11,8 @@ import {
   BookOpen, 
   Building2, 
   Printer, 
-  AlertCircle
+  AlertCircle,
+  Pencil
 } from 'lucide-react';
 
 export default function DocumentsTable({ 
@@ -20,6 +21,7 @@ export default function DocumentsTable({
   onToggleStatus, 
   onOpenQRModal, 
   onOpenPrintModal,
+  onOpenEditSeparationModal,
   onDeleteSeparator 
 }) {
   const [statusFilter, setStatusFilter] = useState('all'); // all, available, checked_out
@@ -187,20 +189,29 @@ export default function DocumentsTable({
 
                 {/* Mobile Quick Action Buttons */}
                 <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => onOpenEditSeparationModal && onOpenEditSeparationModal(sep)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      <span>تعديل</span>
+                    </button>
+
                     <button
                       type="button"
                       onClick={() => onOpenQRModal(sep)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
                     >
                       <QrCode className="w-3.5 h-3.5 text-blue-600" />
-                      <span>كود QR</span>
+                      <span>كود</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => onOpenPrintModal(sep)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
                     >
                       <Printer className="w-3.5 h-3.5" />
                       <span>طباعة</span>
@@ -325,6 +336,15 @@ export default function DocumentsTable({
                     {/* Actions */}
                     <td className="py-3.5 px-4 text-center whitespace-nowrap">
                       <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => onOpenEditSeparationModal && onOpenEditSeparationModal(sep)}
+                          title="تعديل بيانات الفاصل"
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+
                         <button
                           type="button"
                           onClick={() => onOpenQRModal(sep)}

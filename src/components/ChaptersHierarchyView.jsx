@@ -16,9 +16,10 @@ import {
   Calendar,
   Sparkles,
   ChevronLeft,
-  FileText,
   Boxes,
-  X
+  X,
+  Pencil,
+  Edit3
 } from 'lucide-react';
 
 export default function ChaptersHierarchyView({
@@ -28,8 +29,13 @@ export default function ChaptersHierarchyView({
   globalSearchQuery = '',
   setGlobalSearchQuery,
   onOpenAddChapterModal,
+  onOpenEditChapterModal,
+  onOpenDeleteChapterModal,
   onOpenAddBinderModal,
+  onOpenEditBinderModal,
+  onOpenDeleteBinderModal,
   onOpenAddSeparationModal,
+  onOpenEditSeparationModal,
   onToggleStatus,
   onOpenQRModal,
   onOpenPrintModal,
@@ -168,9 +174,35 @@ export default function ChaptersHierarchyView({
             </span>
           </div>
 
-          <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-            {chapters.length} موضوعات مسجلة
-          </span>
+          <div className="flex items-center gap-2">
+            {activeChapter && (
+              <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-lg border border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => onOpenEditChapterModal && onOpenEditChapterModal(activeChapter)}
+                  title="تعديل اسم وكود هذا الموضوع"
+                  className="flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-800 rounded-md text-xs font-bold shadow-2xs border border-slate-200 transition-colors cursor-pointer"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-blue-600" />
+                  <span className="hidden sm:inline">تعديل الموضوع</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onOpenDeleteChapterModal && onOpenDeleteChapterModal(activeChapter)}
+                  title="حذف هذا الموضوع وجميع مجلداته"
+                  className="flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-red-50 text-red-600 rounded-md text-xs font-bold shadow-2xs border border-slate-200 hover:border-red-200 transition-colors cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">حذف</span>
+                </button>
+              </div>
+            )}
+
+            <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+              {chapters.length} موضوعات مسجلة
+            </span>
+          </div>
         </div>
 
         {/* Chapters Cards */}
@@ -180,15 +212,14 @@ export default function ChaptersHierarchyView({
             const bCount = binders.filter(b => b.chapterId === ch.id || b.chapterCode === ch.code).length;
 
             return (
-              <button
+              <div
                 key={ch.id}
-                type="button"
                 onClick={() => {
                   setSelectedChapterId(ch.id);
                   setSelectedBinderId(null);
                   setLocalSearch('');
                 }}
-                className={`p-3.5 rounded-xl border text-right transition-all cursor-pointer relative flex flex-col justify-between ${
+                className={`p-3.5 rounded-xl border text-right transition-all cursor-pointer relative flex flex-col justify-between group ${
                   isSelected
                     ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-slate-900'
                     : 'bg-slate-50/70 hover:bg-white text-slate-800 border-slate-200 hover:border-slate-300'
@@ -201,9 +232,41 @@ export default function ChaptersHierarchyView({
                     }`}>
                       {ch.code}
                     </span>
-                    <span className={`text-xs font-bold ${isSelected ? 'text-blue-300' : 'text-slate-500'}`}>
-                      {bCount} مجلدات
-                    </span>
+                    
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-xs font-bold ${isSelected ? 'text-blue-300' : 'text-slate-500'}`}>
+                        {bCount} مجلدات
+                      </span>
+
+                      {/* Card Edit & Delete Icon Buttons */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenEditChapterModal && onOpenEditChapterModal(ch);
+                        }}
+                        title="تعديل هذا الموضوع"
+                        className={`p-1 rounded-md transition-colors cursor-pointer ${
+                          isSelected ? 'text-slate-300 hover:text-white hover:bg-white/20' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-200'
+                        }`}
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenDeleteChapterModal && onOpenDeleteChapterModal(ch);
+                        }}
+                        title="حذف هذا الموضوع ومجلداته"
+                        className={`p-1 rounded-md transition-colors cursor-pointer ${
+                          isSelected ? 'text-red-300 hover:text-red-200 hover:bg-red-500/30' : 'text-slate-400 hover:text-red-600 hover:bg-red-50'
+                        }`}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="text-xs sm:text-sm font-bold leading-snug">
@@ -217,7 +280,7 @@ export default function ChaptersHierarchyView({
                     <span>الموضوع النشط حالياً</span>
                   </div>
                 )}
-              </button>
+              </div>
             );
           })}
         </div>
@@ -311,6 +374,30 @@ export default function ChaptersHierarchyView({
                         className="p-1 rounded text-slate-400 hover:text-slate-900 hover:bg-slate-200 transition-colors cursor-pointer"
                       >
                         <Printer className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenEditBinderModal && onOpenEditBinderModal(b);
+                        }}
+                        title="تعديل بيانات المجلد والموقع"
+                        className="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenDeleteBinderModal && onOpenDeleteBinderModal(b);
+                        }}
+                        title="حذف هذا المجلد وفواصله"
+                        className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
 
                       {isSelected ? (
@@ -585,6 +672,15 @@ export default function ChaptersHierarchyView({
                             <div className="flex items-center justify-center gap-1.5">
                               <button
                                 type="button"
+                                onClick={() => onOpenEditSeparationModal && onOpenEditSeparationModal(sep)}
+                                title="تعديل بيانات الفاصل"
+                                className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+
+                              <button
+                                type="button"
                                 onClick={() => onOpenQRModal(sep)}
                                 title="عرض كود QR الفاصل"
                                 className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
@@ -687,8 +783,16 @@ export default function ChaptersHierarchyView({
                         <div className="flex items-center gap-1">
                           <button
                             type="button"
+                            onClick={() => onOpenEditSeparationModal && onOpenEditSeparationModal(sep)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                            title="تعديل بيانات الفاصل"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => onOpenQRModal(sep)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
                             title="رمز QR"
                           >
                             <QrCode className="w-4 h-4" />
@@ -696,7 +800,7 @@ export default function ChaptersHierarchyView({
                           <button
                             type="button"
                             onClick={() => onOpenPrintModal(sep)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
                             title="طباعة ملصق تبويب"
                           >
                             <Printer className="w-4 h-4" />
@@ -704,7 +808,7 @@ export default function ChaptersHierarchyView({
                           <button
                             type="button"
                             onClick={() => onDeleteSeparator(sep.id)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
                             title="حذف"
                           >
                             <Trash2 className="w-4 h-4" />
