@@ -1,0 +1,476 @@
+// Hierarchical physical archive data for "شركة المستقبل" (Future Company)
+// Structure: الموضوع (Chapter) -> المجلد (Binder with auto-generated code) -> الفواصل (Separations/Dividers) -> الوثائق (Documents)
+
+export const initialChapters = [
+  {
+    id: "ch-fin",
+    code: "FIN",
+    name: "الشؤون المالية والحسابات",
+    englishName: "Finance & Accounting",
+    description: "فواتير الموردين، المستندات الضريبية، القيود المحاسبية، والبيانات المالية السنوية والمدققة",
+    color: "#0284c7", // Blue
+    icon: "Receipt",
+    bindersCount: 2,
+    docsCount: 67,
+  },
+  {
+    id: "ch-cnt",
+    code: "CNT",
+    name: "العقود والاتفاقيات الرسمية",
+    englishName: "Contracts & Agreements",
+    description: "عقود التوريد والمقاولات، اتفاقيات مستوى الخدمة (SLA)، ومذكرات التفاهم",
+    color: "#059669", // Emerald
+    icon: "FileSignature",
+    bindersCount: 1,
+    docsCount: 32,
+  },
+  {
+    id: "ch-leg",
+    code: "LEG",
+    name: "السجلات والتراخيص القانونية",
+    englishName: "Legal & Licenses",
+    description: "السجلات التجارية، التراخيص البلدية، شهادات الزكاة والدخل، والوكالات الشرعية",
+    color: "#ea580c", // Amber/Orange
+    icon: "Scale",
+    bindersCount: 1,
+    docsCount: 15,
+  },
+  {
+    id: "ch-hr",
+    code: "HR",
+    name: "الموارد البشرية وشؤون الموظفين",
+    englishName: "Human Resources",
+    description: "عقود عمل الكوادر، مسوغات التعيين، مسيرات الرواتب الشهرية، والتأمينات الاجتماعية",
+    color: "#0d9488", // Teal
+    icon: "Users",
+    bindersCount: 1,
+    docsCount: 65,
+  },
+  {
+    id: "ch-prc",
+    code: "PRC",
+    name: "المشتريات وسلاسل الإمداد",
+    englishName: "Procurement & Logistics",
+    description: "أوامر الشراء، مستندات استلام البضائع، ومناقصات تأمين المعدات والتشغيل",
+    color: "#7c3aed", // Purple
+    icon: "PackageCheck",
+    bindersCount: 1,
+    docsCount: 24,
+  }
+];
+
+export const initialBinders = [
+  {
+    id: "binder-1",
+    chapterId: "ch-fin",
+    chapterName: "الشؤون المالية والحسابات",
+    chapterCode: "FIN",
+    number: 1,
+    code: "FIN-01", // Auto-generated easy code
+    name: "فواتير الموردين - 2023",
+    cabinet: "خزانة أ",
+    cabinetCode: "A",
+    shelf: "رف 3",
+    shelfNumber: 3,
+    color: "#0284c7",
+    category: "فواتير وحسابات",
+    totalCapacity: 200,
+    currentDocsCount: 48,
+    qrCode: "ARC-FIN-01",
+    barcode: "628100101031",
+    description: "أصل فواتير المشتريات ومستخلصات التوريد المعتمدة لعام 2023",
+    status: "نشط",
+    // Internal physical dividers / separations
+    separations: [
+      { id: "sep-1-1", number: 1, code: "FIN-01-S01", name: "فواتير الربع الأول (Q1)", color: "#38bdf8", docsCount: 12 },
+      { id: "sep-1-2", number: 2, code: "FIN-01-S02", name: "فواتير الربع الثاني (Q2)", color: "#34d399", docsCount: 10 },
+      { id: "sep-1-3", number: 3, code: "FIN-01-S03", name: "فواتير الربع الثالث (Q3)", color: "#fbbf24", docsCount: 11 },
+      { id: "sep-1-4", number: 4, code: "FIN-01-S04", name: "فواتير الربع الرابع (Q4)", color: "#f87171", docsCount: 15 }
+    ]
+  },
+  {
+    id: "binder-2",
+    chapterId: "ch-cnt",
+    chapterName: "العقود والاتفاقيات الرسمية",
+    chapterCode: "CNT",
+    number: 1,
+    code: "CNT-01", // Auto-generated easy code
+    name: "عقود التوريد والمشتريات المعتمدة",
+    cabinet: "خزانة أ",
+    cabinetCode: "A",
+    shelf: "رف 2",
+    shelfNumber: 2,
+    color: "#059669",
+    category: "عقود واتفاقيات",
+    totalCapacity: 150,
+    currentDocsCount: 32,
+    qrCode: "ARC-CNT-01",
+    barcode: "628100102022",
+    description: "العقود الموقعة مع موردي التقنية والمعدات لعامي 2023-2024",
+    status: "نشط",
+    separations: [
+      { id: "sep-2-1", number: 1, code: "CNT-01-S01", name: "عقود أجهزة الحاسب والشبكات", color: "#10b981", docsCount: 14 },
+      { id: "sep-2-2", number: 2, code: "CNT-01-S02", name: "اتفاقيات الدعم الفني والصيانة", color: "#06b6d4", docsCount: 10 },
+      { id: "sep-2-3", number: 3, code: "CNT-01-S03", name: "ملاحق العقود وخطابات الضمان", color: "#a855f7", docsCount: 8 }
+    ]
+  },
+  {
+    id: "binder-3",
+    chapterId: "ch-fin",
+    chapterName: "الشؤون المالية والحسابات",
+    chapterCode: "FIN",
+    number: 2,
+    code: "FIN-02", // Auto-generated easy code
+    name: "البيانات والقوائم المالية المدققة",
+    cabinet: "خزانة ب",
+    cabinetCode: "B",
+    shelf: "رف 1",
+    shelfNumber: 1,
+    color: "#7c3aed",
+    category: "تقارير مالية",
+    totalCapacity: 120,
+    currentDocsCount: 19,
+    qrCode: "ARC-FIN-02",
+    barcode: "628100201013",
+    description: "تقارير المحاسب القانوني والقوائم المالية ربع السنوية",
+    status: "نشط",
+    separations: [
+      { id: "sep-3-1", number: 1, code: "FIN-02-S01", name: "تقارير المدقق الخارجي السنوية", color: "#8b5cf6", docsCount: 9 },
+      { id: "sep-3-2", number: 2, code: "FIN-02-S02", name: "مذكرات الإقفال والميزانيات التجريبية", color: "#ec4899", docsCount: 10 }
+    ]
+  },
+  {
+    id: "binder-4",
+    chapterId: "ch-leg",
+    chapterName: "السجلات والتراخيص القانونية",
+    chapterCode: "LEG",
+    number: 1,
+    code: "LEG-01", // Auto-generated easy code
+    name: "السجلات والتراخيص الحكومية",
+    cabinet: "خزانة ب",
+    cabinetCode: "B",
+    shelf: "رف 3",
+    shelfNumber: 3,
+    color: "#ea580c",
+    category: "وثائق قانونية",
+    totalCapacity: 100,
+    currentDocsCount: 15,
+    qrCode: "ARC-LEG-01",
+    barcode: "628100202034",
+    description: "السجل التجاري، التراخيص البلدية، وشهادات الزكاة",
+    status: "نشط",
+    separations: [
+      { id: "sep-4-1", number: 1, code: "LEG-01-S01", name: "الوثائق التأسيسية والسجل التجاري", color: "#f97316", docsCount: 8 },
+      { id: "sep-4-2", number: 2, code: "LEG-01-S02", name: "شهادات التأمينات والزكاة والبلدية", color: "#eab308", docsCount: 7 }
+    ]
+  },
+  {
+    id: "binder-5",
+    chapterId: "ch-hr",
+    chapterName: "الموارد البشرية وشؤون الموظفين",
+    chapterCode: "HR",
+    number: 1,
+    code: "HR-01", // Auto-generated easy code
+    name: "ملفات الموظفين والكوادر الإدارية",
+    cabinet: "خزانة ج",
+    cabinetCode: "C",
+    shelf: "رف 2",
+    shelfNumber: 2,
+    color: "#0d9488",
+    category: "الموارد البشرية",
+    totalCapacity: 250,
+    currentDocsCount: 65,
+    qrCode: "ARC-HR-01",
+    barcode: "628100301025",
+    description: "عقود العمل ومسوغات التعيين لجميع منسوبي الشركة",
+    status: "نشط",
+    separations: [
+      { id: "sep-5-1", number: 1, code: "HR-01-S01", name: "عقود الإدارة التنفيذية", color: "#14b8a6", docsCount: 18 },
+      { id: "sep-5-2", number: 2, code: "HR-01-S02", name: "عقود الكوادر التقنية والهندسية", color: "#0ea5e9", docsCount: 25 },
+      { id: "sep-5-3", number: 3, code: "HR-01-S03", name: "عقود موظفي العمليات والخدمات المساندة", color: "#6366f1", docsCount: 22 }
+    ]
+  }
+];
+
+export const initialDocuments = [
+  {
+    id: "doc-1",
+    chapterId: "ch-cnt",
+    chapterName: "العقود والاتفاقيات الرسمية",
+    chapterCode: "CNT",
+    binderId: "binder-2",
+    binderName: "عقود التوريد والمشتريات المعتمدة",
+    binderCode: "CNT-01",
+    separationId: "sep-2-1",
+    separationName: "عقود أجهزة الحاسب والشبكات",
+    separationCode: "CNT-01-S01",
+    title: "عقد توريد حواسيب محمولة ومعدات شبكات",
+    docNumber: "CNT-01-S01-D104",
+    cabinet: "خزانة أ",
+    shelf: "رف 2",
+    location: "خزانة أ - رف 2",
+    folderTab: "فاصل 1: عقود أجهزة الحاسب والشبكات (CNT-01-S01)",
+    date: "2023/11/18",
+    status: "available", // متاح
+    client: "شركة الأفق للحلول الرقمية",
+    borrower: null,
+    borrowDate: null,
+    dueDate: null,
+    pagesCount: 18,
+    qrCode: "ARC-CNT-01-S01-D104",
+    barcode: "628100293841",
+    notes: "العقد يتضمن كفالة تشغيلية لمدة سنتين مع صيانة دورية."
+  },
+  {
+    id: "doc-2",
+    chapterId: "ch-fin",
+    chapterName: "الشؤون المالية والحسابات",
+    chapterCode: "FIN",
+    binderId: "binder-1",
+    binderName: "فواتير الموردين - 2023",
+    binderCode: "FIN-01",
+    separationId: "sep-1-4",
+    separationName: "فواتير الربع الرابع (Q4)",
+    separationCode: "FIN-01-S04",
+    title: "فاتورة ضريبية رقم 105 - مستلزمات مكتبية",
+    docNumber: "FIN-01-S04-D105",
+    cabinet: "خزانة أ",
+    shelf: "رف 3",
+    location: "خزانة أ - رف 3",
+    folderTab: "فاصل 4: فواتير الربع الرابع (FIN-01-S04)",
+    date: "2023/12/04",
+    status: "checked_out", // مستعار
+    client: "مكتبة الشرق التجارية",
+    borrower: "أحمد الراجحي (قسم المحاسبة)",
+    borrowDate: "2024/01/10",
+    dueDate: "2024/01/17",
+    pagesCount: 4,
+    qrCode: "ARC-FIN-01-S04-D105",
+    barcode: "628100105042",
+    notes: "مستعارة لغرض مطابقة إقرارات ضريبة القيمة المضافة."
+  },
+  {
+    id: "doc-3",
+    chapterId: "ch-fin",
+    chapterName: "الشؤون المالية والحسابات",
+    chapterCode: "FIN",
+    binderId: "binder-3",
+    binderName: "البيانات والقوائم المالية المدققة",
+    binderCode: "FIN-02",
+    separationId: "sep-3-1",
+    separationName: "تقارير المدقق الخارجي السنوية",
+    separationCode: "FIN-02-S01",
+    title: "بيان مالي ربع سنوي مدقق - الربع الثالث",
+    docNumber: "FIN-02-S01-D003",
+    cabinet: "خزانة ب",
+    shelf: "رف 1",
+    location: "خزانة ب - رف 1",
+    folderTab: "فاصل 1: تقارير المدقق الخارجي (FIN-02-S01)",
+    date: "2023/10/25",
+    status: "available", // متاح
+    client: "مكتب المراجعة والمحاسبة الدولية",
+    borrower: null,
+    borrowDate: null,
+    dueDate: null,
+    pagesCount: 32,
+    qrCode: "ARC-FIN-02-S01-D003",
+    barcode: "628100201033",
+    notes: "نسخة معتمدة ومختومة بختم المحاسب القانوني."
+  },
+  {
+    id: "doc-4",
+    chapterId: "ch-leg",
+    chapterName: "السجلات والتراخيص القانونية",
+    chapterCode: "LEG",
+    binderId: "binder-4",
+    binderName: "السجلات والتراخيص الحكومية",
+    binderCode: "LEG-01",
+    separationId: "sep-4-1",
+    separationName: "الوثائق التأسيسية والسجل التجاري",
+    separationCode: "LEG-01-S01",
+    title: "تجديد السجل التجاري ورخصة الاستثمار",
+    docNumber: "LEG-01-S01-D088",
+    cabinet: "خزانة ب",
+    shelf: "رف 3",
+    location: "خزانة ب - رف 3",
+    folderTab: "فاصل 1: الوثائق التأسيسية (LEG-01-S01)",
+    date: "2023/09/15",
+    status: "available", // متاح
+    client: "وزارة التجارة والاستثمار",
+    borrower: null,
+    borrowDate: null,
+    dueDate: null,
+    pagesCount: 6,
+    qrCode: "ARC-LEG-01-S01-D088",
+    barcode: "628100202088",
+    notes: "ساري المفعول حتى تاريخ 2027/09/14."
+  },
+  {
+    id: "doc-5",
+    chapterId: "ch-fin",
+    chapterName: "الشؤون المالية والحسابات",
+    chapterCode: "FIN",
+    binderId: "binder-1",
+    binderName: "فواتير الموردين - 2023",
+    binderCode: "FIN-01",
+    separationId: "sep-1-3",
+    separationName: "فواتير الربع الثالث (Q3)",
+    separationCode: "FIN-01-S03",
+    title: "فاتورة صيانة أجهزة التكييف المركزي رقم 88",
+    docNumber: "FIN-01-S03-D088",
+    cabinet: "خزانة أ",
+    shelf: "رف 3",
+    location: "خزانة أ - رف 3",
+    folderTab: "فاصل 3: فواتير الربع الثالث (FIN-01-S03)",
+    date: "2023/08/20",
+    status: "available", // متاح
+    client: "مؤسسة النسيم للتبريد والتكييف",
+    borrower: null,
+    borrowDate: null,
+    dueDate: null,
+    pagesCount: 3,
+    qrCode: "ARC-FIN-01-S03-D088",
+    barcode: "628100103088",
+    notes: "تم سداد الدفعة بموجب شيك بنكي مصدق."
+  },
+  {
+    id: "doc-6",
+    chapterId: "ch-hr",
+    chapterName: "الموارد البشرية وشؤون الموظفين",
+    chapterCode: "HR",
+    binderId: "binder-5",
+    binderName: "ملفات الموظفين والكوادر الإدارية",
+    binderCode: "HR-01",
+    separationId: "sep-5-1",
+    separationName: "عقود الإدارة التنفيذية",
+    separationCode: "HR-01-S01",
+    title: "عقد توظيف مدير المشاريع الهندسية",
+    docNumber: "HR-01-S01-D042",
+    cabinet: "خزانة ج",
+    shelf: "رف 2",
+    location: "خزانة ج - رف 2",
+    folderTab: "فاصل 1: عقود الإدارة التنفيذية (HR-01-S01)",
+    date: "2023/07/01",
+    status: "checked_out", // مستعار
+    client: "إدارة الموارد البشرية",
+    borrower: "سارة المنصور (مديرة التوظيف)",
+    borrowDate: "2024/01/12",
+    dueDate: "2024/01/19",
+    pagesCount: 12,
+    qrCode: "ARC-HR-01-S01-D042",
+    barcode: "628100301042",
+    notes: "مطلوب لتحديث ملف التأمينات الاجتماعية والبدلات."
+  },
+  {
+    id: "doc-7",
+    chapterId: "ch-cnt",
+    chapterName: "العقود والاتفاقيات الرسمية",
+    chapterCode: "CNT",
+    binderId: "binder-2",
+    binderName: "عقود التوريد والمشتريات المعتمدة",
+    binderCode: "CNT-01",
+    separationId: "sep-2-2",
+    separationName: "اتفاقيات الدعم الفني والصيانة",
+    separationCode: "CNT-01-S02",
+    title: "عقد صيانة الخوادم والأنظمة السحابية",
+    docNumber: "CNT-01-S02-D002",
+    cabinet: "خزانة أ",
+    shelf: "رف 2",
+    location: "خزانة أ - رف 2",
+    folderTab: "فاصل 2: اتفاقيات الدعم الفني (CNT-01-S02)",
+    date: "2024/01/05",
+    status: "available", // متاح
+    client: "شركة السحابة العربية لتقنية المعلومات",
+    borrower: null,
+    borrowDate: null,
+    dueDate: null,
+    pagesCount: 24,
+    qrCode: "ARC-CNT-01-S02-D002",
+    barcode: "628100102002",
+    notes: "اتفاقية مستوى الخدمة SLA بنسبة توافر 99.9%."
+  }
+];
+
+export const initialAuditLogs = [
+  {
+    id: "log-1",
+    docId: "doc-2",
+    docTitle: "فاتورة ضريبية رقم 105 - مستلزمات مكتبية",
+    action: "checkout",
+    actionName: "إعارة وثيقة",
+    performedBy: "أحمد",
+    borrower: "أحمد الراجحي (قسم المحاسبة)",
+    date: "2024-01-10 10:30",
+    reason: "مطابقة إقرارات ضريبة القيمة المضافة"
+  },
+  {
+    id: "log-2",
+    docId: "doc-6",
+    docTitle: "عقد توظيف مدير المشاريع الهندسية",
+    action: "checkout",
+    actionName: "إعارة وثيقة",
+    performedBy: "أحمد",
+    borrower: "سارة المنصور (مديرة التوظيف)",
+    date: "2024-01-12 14:15",
+    reason: "تحديث ملف التأمينات الاجتماعية والبدلات"
+  },
+  {
+    id: "log-3",
+    docId: "doc-1",
+    docTitle: "عقد توريد حواسيب محمولة ومعدات شبكات",
+    action: "create",
+    actionName: "إيداع وثيقة جديدة بالأرشيف",
+    performedBy: "أحمد",
+    borrower: null,
+    date: "2023-11-18 09:00",
+    reason: "إيداع أصل العقد في خزانة أ - رف 2 (CNT-01)"
+  }
+];
+
+export const cabinetsData = [
+  {
+    id: "CAB-A",
+    name: "خزانة أ",
+    code: "A",
+    category: "المالية والمشتريات والعقود",
+    color: "blue",
+    description: "مخصصة لفواتير الموردين، المستندات الضريبية، وعقود التوريد والمشتريات السنوية",
+    totalShelves: 4,
+    shelves: [
+      { number: 4, name: "رف 4", bindersCount: 2, capacity: 5 },
+      { number: 3, name: "رف 3 (فواتير الموردين FIN-01)", bindersCount: 3, capacity: 5, highlight: true },
+      { number: 2, name: "رف 2 (عقود التوريد CNT-01)", bindersCount: 4, capacity: 5 },
+      { number: 1, name: "رف 1 (أرشيف قديم)", bindersCount: 2, capacity: 5 },
+    ]
+  },
+  {
+    id: "CAB-B",
+    name: "خزانة ب",
+    code: "B",
+    category: "الإدارة والقانونية والقوائم المالية",
+    color: "purple",
+    description: "مخصصة للبيانات المالية المدققة، التراخيص والسجلات التجارية، ومحاضر الاجتماعات",
+    totalShelves: 4,
+    shelves: [
+      { number: 4, name: "رف 4", bindersCount: 2, capacity: 5 },
+      { number: 3, name: "رف 3 (السجلات والتراخيص LEG-01)", bindersCount: 3, capacity: 5 },
+      { number: 2, name: "رف 2 (محاضر مجالس الإدارة)", bindersCount: 4, capacity: 5 },
+      { number: 1, name: "رف 1 (القوائم المالية المدققة FIN-02)", bindersCount: 4, capacity: 5 },
+    ]
+  },
+  {
+    id: "CAB-C",
+    name: "خزانة ج",
+    code: "C",
+    category: "الموارد البشرية والموظفين",
+    color: "teal",
+    description: "مخصصة لملفات الموظفين والمسيرات الشهرية والاتفاقيات العمالية",
+    totalShelves: 4,
+    shelves: [
+      { number: 4, name: "رف 4", bindersCount: 1, capacity: 5 },
+      { number: 3, name: "رف 3", bindersCount: 4, capacity: 5 },
+      { number: 2, name: "رف 2 (ملفات الموظفين HR-01)", bindersCount: 5, capacity: 5 },
+      { number: 1, name: "رف 1 (مسيرات الرواتب القديمة)", bindersCount: 3, capacity: 5 },
+    ]
+  }
+];
