@@ -26,8 +26,8 @@ export default function AddBinderModal({
   );
   const [name, setName] = useState('');
   const [autoCode, setAutoCode] = useState('');
-  const [cabinet, setCabinet] = useState('خزانة أ');
-  const [shelf, setShelf] = useState('رف 3');
+  const [cabinet, setCabinet] = useState('الخزانة الرئيسية');
+  const [shelf, setShelf] = useState('رف 1');
   const [totalCapacity, setTotalCapacity] = useState(10);
   const [description, setDescription] = useState('');
   const [separationsCount, setSeparationsCount] = useState(4); // Default 4 quarters or tabs
@@ -169,9 +169,7 @@ export default function AddBinderModal({
                 onChange={(e) => setCabinet(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-bold transition-all"
               >
-                <option value="خزانة أ">خزانة أ (المالية والعقود)</option>
-                <option value="خزانة ب">خزانة ب (الإدارية والقانونية)</option>
-                <option value="خزانة ج">خزانة ج (الموارد البشرية)</option>
+                <option value="الخزانة الرئيسية">الخزانة الرئيسية (غرفة الأرشيف 102)</option>
               </select>
             </div>
 
@@ -184,10 +182,11 @@ export default function AddBinderModal({
                 onChange={(e) => setShelf(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-bold transition-all"
               >
-                <option value="رف 1">رف 1 (الأسفل)</option>
+                <option value="رف 1">رف 1</option>
                 <option value="رف 2">رف 2</option>
-                <option value="رف 3">رف 3 (المستوى الأوسط)</option>
-                <option value="رف 4">رف 4 (الأعلى)</option>
+                <option value="رف 3">رف 3</option>
+                <option value="رف 4">رف 4</option>
+                <option value="رف 5">رف 5</option>
               </select>
             </div>
           </div>

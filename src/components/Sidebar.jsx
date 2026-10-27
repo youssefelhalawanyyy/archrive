@@ -3,7 +3,6 @@ import {
   BookOpen, 
   LayoutDashboard, 
   FolderArchive, 
-  Server, 
   FilePlus2, 
   FileText, 
   Boxes, 
@@ -21,7 +20,7 @@ export default function Sidebar({
       id: 'hierarchy',
       label: 'الموضوعات والأرشيف',
       icon: BookOpen,
-      badge: `${stats.chaptersCount || 5} موضوعات`,
+      badge: `${stats.chaptersCount || 7} موضوعات`,
       description: 'الموضوع ➔ المجلدات ➔ الفواصل'
     },
     {
@@ -37,13 +36,6 @@ export default function Sidebar({
       icon: FolderArchive,
       badge: `${stats.bindersCount} مجلدات`,
       description: 'الأرفف وسعة المجلدات'
-    },
-    {
-      id: 'cabinet-map',
-      label: 'الخزانة الرقمية',
-      icon: Server,
-      badge: '3 خزائن',
-      description: 'خريطة الأرفف والخزائن'
     },
     {
       id: 'reports',

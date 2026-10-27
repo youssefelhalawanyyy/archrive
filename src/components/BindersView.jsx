@@ -22,19 +22,19 @@ export default function BindersView({
   onOpenQRModal, 
   onOpenPrintModal 
 }) {
-  const [cabinetFilter, setCabinetFilter] = useState('all');
+  const [shelfFilter, setShelfFilter] = useState('all');
   const [search, setSearch] = useState('');
 
   const activeItems = separators.length > 0 ? separators : documents;
 
   const filteredBinders = binders.filter((b) => {
-    const matchesCabinet = cabinetFilter === 'all' || b.cabinet === cabinetFilter;
+    const matchesShelf = shelfFilter === 'all' || (b.shelf && b.shelf.includes(shelfFilter));
     const matchesSearch = !search || (
       b.name.toLowerCase().includes(search.toLowerCase()) ||
       b.code.toLowerCase().includes(search.toLowerCase()) ||
-      b.category.toLowerCase().includes(search.toLowerCase())
+      (b.category && b.category.toLowerCase().includes(search.toLowerCase()))
     );
-    return matchesCabinet && matchesSearch;
+    return matchesShelf && matchesSearch;
   });
 
   return (
@@ -47,29 +47,32 @@ export default function BindersView({
             <div className="p-2 rounded-lg bg-slate-900 text-white">
               <FolderArchive className="w-5 h-5 text-blue-400 stroke-[2.2]" />
             </div>
-            <h2 className="text-lg font-black text-slate-900">
-              المجلدات الفيزيائية والأرفف
-            </h2>
+            <div>
+              <div className="text-xs font-bold text-blue-700">الخزانة الرئيسية • غرفة الأرشيف 102</div>
+              <h2 className="text-lg font-black text-slate-900">
+                المجلدات الفيزيائية النشطة
+              </h2>
+            </div>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            متابعة المجلدات وأكوادها وسعتها الاستيعابية من الفواصل الكرتونية
+          <p className="text-xs text-slate-500 mt-1">
+            جميع مجلدات الأرشيف مودعة في الخزانة الرئيسية وموزعة حسب الأرفف التصنيفية
           </p>
         </div>
 
-        {/* Filters */}
+        {/* Shelf Filters */}
         <div className="flex flex-wrap items-center gap-1.5">
-          {['all', 'خزانة أ', 'خزانة ب', 'خزانة ج'].map((cab) => (
+          {['all', 'رف 1', 'رف 2', 'رف 3', 'رف 4', 'رف 5'].map((sh) => (
             <button
-              key={cab}
+              key={sh}
               type="button"
-              onClick={() => setCabinetFilter(cab)}
+              onClick={() => setShelfFilter(sh)}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                cabinetFilter === cab
+                shelfFilter === sh
                   ? 'bg-blue-700 text-white shadow-2xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
-              {cab === 'all' ? 'جميع الخزائن' : cab}
+              {sh === 'all' ? 'جميع الأرفف' : sh}
             </button>
           ))}
         </div>

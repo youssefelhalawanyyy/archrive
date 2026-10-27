@@ -11,7 +11,6 @@ import CheckoutModal from './components/CheckoutModal';
 import QRModal from './components/QRModal';
 import SpineLabelModal from './components/SpineLabelModal';
 import BindersView from './components/BindersView';
-import CabinetMapView from './components/CabinetMapView';
 import ReportsView from './components/ReportsView';
 
 import { 
@@ -305,14 +304,7 @@ export default function App() {
             />
           )}
 
-          {/* TAB 4: Digital Cabinet Map */}
-          {currentTab === 'cabinet-map' && (
-            <CabinetMapView
-              binders={binders}
-              separators={separators}
-              onSelectBinder={() => setCurrentTab('hierarchy')}
-            />
-          )}
+
 
           {/* TAB 5: Checkout & Audit Reports */}
           {currentTab === 'reports' && (
