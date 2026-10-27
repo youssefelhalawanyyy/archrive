@@ -26,10 +26,10 @@ export default function Sidebar({
     },
     {
       id: 'dashboard',
-      label: 'سجل الوثائق العام',
+      label: 'سجل الفواصل العام',
       icon: LayoutDashboard,
       badge: null,
-      description: 'جدول الوثائق والبحث الفوري'
+      description: 'جدول الفواصل والبحث الفوري'
     },
     {
       id: 'binders',
@@ -59,7 +59,7 @@ export default function Sidebar({
     <aside className="w-64 bg-white border-l border-slate-200 flex flex-col justify-between shrink-0 shadow-2xs font-cairo select-none">
       <div className="p-4">
         
-        {/* Quick CTA to Add Document */}
+        {/* Quick CTA to Add Separator */}
         <button
           type="button"
           id="sidebar-add-doc-cta"
@@ -67,7 +67,7 @@ export default function Sidebar({
           className="w-full mb-5 flex items-center justify-center gap-2 px-3.5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer group"
         >
           <FilePlus2 className="w-4 h-4 text-blue-400 group-hover:scale-105 transition-transform" />
-          <span>إيداع وثيقة جديدة</span>
+          <span>إضافة فاصل كرتوني</span>
         </button>
 
         {/* Section Title */}
@@ -127,7 +127,7 @@ export default function Sidebar({
           <div className="grid grid-cols-2 gap-2 text-center">
             <div className="p-1.5 rounded bg-slate-50 border border-slate-100">
               <div className="text-sm font-black text-slate-900 font-mono">{stats.totalDocs}</div>
-              <div className="text-[10px] text-slate-500">إجمالي الوثائق</div>
+              <div className="text-[10px] text-slate-500">إجمالي الفواصل</div>
             </div>
             <div className="p-1.5 rounded bg-slate-50 border border-slate-100">
               <div className="text-sm font-black text-amber-700 font-mono">{stats.checkedOutCount}</div>

@@ -1,67 +1,62 @@
 import React, { useState, useMemo } from 'react';
 import { 
-  FileText, 
+  Layers, 
   MapPin, 
   FolderKanban, 
   Calendar, 
-  CheckCircle2, 
-  Clock, 
-  Eye, 
   QrCode, 
   Trash2, 
   ChevronRight, 
   ChevronLeft, 
-  Filter, 
-  BookOpen,
-  Layers,
-  Building2,
+  BookOpen, 
+  Building2, 
+  Printer, 
   AlertCircle
 } from 'lucide-react';
 
 export default function DocumentsTable({ 
-  documents = [], 
+  separators = [], 
   searchQuery = '', 
-  selectedDocId = null, 
-  onSelectDoc, 
   onToggleStatus, 
   onOpenQRModal, 
-  onDeleteDoc 
+  onOpenPrintModal,
+  onDeleteSeparator 
 }) {
   const [statusFilter, setStatusFilter] = useState('all'); // all, available, checked_out
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = 7;
 
-  // Filter documents based on searchQuery & status
-  const filteredDocuments = useMemo(() => {
-    return documents.filter((doc) => {
+  // Filter separators based on search & status
+  const filteredSeparators = useMemo(() => {
+    return separators.filter((sep) => {
       const q = searchQuery.trim().toLowerCase();
       const matchesSearch = !q || (
-        (doc.title && doc.title.toLowerCase().includes(q)) ||
-        (doc.docNumber && doc.docNumber.toLowerCase().includes(q)) ||
-        (doc.chapterName && doc.chapterName.toLowerCase().includes(q)) ||
-        (doc.chapterCode && doc.chapterCode.toLowerCase().includes(q)) ||
-        (doc.binderName && doc.binderName.toLowerCase().includes(q)) ||
-        (doc.binderCode && doc.binderCode.toLowerCase().includes(q)) ||
-        (doc.separationName && doc.separationName.toLowerCase().includes(q)) ||
-        (doc.location && doc.location.toLowerCase().includes(q)) ||
-        (doc.client && doc.client.toLowerCase().includes(q)) ||
-        (doc.borrower && doc.borrower.toLowerCase().includes(q))
+        (sep.name && sep.name.toLowerCase().includes(q)) ||
+        (sep.code && sep.code.toLowerCase().includes(q)) ||
+        (sep.chapterName && sep.chapterName.toLowerCase().includes(q)) ||
+        (sep.chapterCode && sep.chapterCode.toLowerCase().includes(q)) ||
+        (sep.binderName && sep.binderName.toLowerCase().includes(q)) ||
+        (sep.binderCode && sep.binderCode.toLowerCase().includes(q)) ||
+        (sep.location && sep.location.toLowerCase().includes(q)) ||
+        (sep.client && sep.client.toLowerCase().includes(q)) ||
+        (sep.borrower && sep.borrower.toLowerCase().includes(q)) ||
+        (sep.description && sep.description.toLowerCase().includes(q))
       );
 
       const matchesStatus = 
         statusFilter === 'all' || 
-        (statusFilter === 'available' && doc.status === 'available') ||
-        (statusFilter === 'checked_out' && doc.status === 'checked_out');
+        (statusFilter === 'available' && sep.status === 'available') ||
+        (statusFilter === 'checked_out' && sep.status === 'checked_out');
 
       return matchesSearch && matchesStatus;
     });
-  }, [documents, searchQuery, statusFilter]);
+  }, [separators, searchQuery, statusFilter]);
 
-  const totalPages = Math.ceil(filteredDocuments.length / itemsPerPage) || 1;
-  const paginatedDocs = useMemo(() => {
+  const totalPages = Math.ceil(filteredSeparators.length / itemsPerPage) || 1;
+  const paginatedItems = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
-    return filteredDocuments.slice(start, start + itemsPerPage);
-  }, [filteredDocuments, currentPage]);
+    return filteredSeparators.slice(start, start + itemsPerPage);
+  }, [filteredSeparators, currentPage]);
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -78,14 +73,14 @@ export default function DocumentsTable({
         <div>
           <div className="flex items-center gap-2">
             <h3 className="text-base font-black text-slate-900">
-              سجل الوثائق الورقية
+              سجل الفواصل والتبويبات المودعة بالمجلدات
             </h3>
             <span className="text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
-              {filteredDocuments.length} وثيقة
+              {filteredSeparators.length} فاصل كرتوني
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            إدارة ومتابعة الوثائق المادية مع تصنيف الموضوع والمجلد والفاصل
+            إدارة وتتبع الفواصل الكرتونية الميدانية وحالات إعارتها واستردادها
           </p>
         </div>
 
@@ -100,7 +95,7 @@ export default function DocumentsTable({
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            الكل ({documents.length})
+            الكل ({separators.length})
           </button>
           <button
             type="button"
@@ -112,7 +107,7 @@ export default function DocumentsTable({
             }`}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            <span>متاح ({documents.filter(d => d.status === 'available').length})</span>
+            <span>متاح ({separators.filter(s => s.status === 'available').length})</span>
           </button>
           <button
             type="button"
@@ -124,7 +119,7 @@ export default function DocumentsTable({
             }`}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-amber-300"></span>
-            <span>مستعار ({documents.filter(d => d.status === 'checked_out').length})</span>
+            <span>مستعار ({separators.filter(s => s.status === 'checked_out').length})</span>
           </button>
         </div>
 
@@ -134,160 +129,140 @@ export default function DocumentsTable({
       <div className="overflow-x-auto">
         <table className="w-full text-right text-sm">
           <thead>
-            <tr className="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-bold text-xs uppercase tracking-wider">
-              <th scope="col" className="py-3.5 px-4 sm:px-6">اسم الوثيقة والكود</th>
-              <th scope="col" className="py-3.5 px-4">الموضوع (Chapter)</th>
-              <th scope="col" className="py-3.5 px-4">المجلد والفاصل</th>
-              <th scope="col" className="py-3.5 px-4">الموقع الميداني</th>
-              <th scope="col" className="py-3.5 px-4">التاريخ</th>
-              <th scope="col" className="py-3.5 px-4 text-center">الحالة</th>
-              <th scope="col" className="py-3.5 px-4 text-center">إجراءات</th>
+            <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold text-xs uppercase tracking-wider">
+              <th scope="col" className="py-3 px-4">كود الفاصل</th>
+              <th scope="col" className="py-3 px-4">اسم الفاصل ومحتواه</th>
+              <th scope="col" className="py-3 px-4">الموضوع الرئيسي</th>
+              <th scope="col" className="py-3 px-4">المجلد التابع له</th>
+              <th scope="col" className="py-3 px-4">الموقع الميداني</th>
+              <th scope="col" className="py-3 px-4">عدد الأوراق</th>
+              <th scope="col" className="py-3 px-4">التاريخ</th>
+              <th scope="col" className="py-3 px-4 text-center">الحالة</th>
+              <th scope="col" className="py-3 px-4 text-center">إجراءات</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
-            {paginatedDocs.length > 0 ? (
-              paginatedDocs.map((doc) => {
-                const isSelected = selectedDocId === doc.id;
-                const isAvailable = doc.status === 'available';
+          <tbody className="divide-y divide-slate-100 font-medium">
+            {paginatedItems.length > 0 ? (
+              paginatedItems.map((sep) => {
+                const isAvailable = sep.status === 'available';
 
                 return (
                   <tr 
-                    key={doc.id}
-                    onClick={() => onSelectDoc(doc)}
-                    className={`transition-colors cursor-pointer group ${
-                      isSelected 
-                        ? 'bg-brand-50/70 hover:bg-brand-50' 
-                        : 'hover:bg-slate-50/80'
-                    }`}
+                    key={sep.id}
+                    className="hover:bg-slate-50/80 transition-colors group"
                   >
-                    {/* اسم الوثيقة (Document Name) */}
-                    <td className="py-4 px-4 sm:px-6">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-xl transition-colors shrink-0 ${
-                          isSelected 
-                            ? 'bg-brand-600 text-white shadow-xs' 
-                            : 'bg-slate-100 text-slate-500 group-hover:bg-brand-100 group-hover:text-brand-600'
-                        }`}>
-                          <FileText className="w-4 h-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="font-black text-slate-900 group-hover:text-brand-700 transition-colors truncate max-w-xs">
-                            {doc.title}
-                          </div>
-                          <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
-                            <span className="font-mono text-[10px] bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 font-bold text-slate-700">
-                              {doc.docNumber || 'DOC-ARCH'}
-                            </span>
-                            {doc.client && (
-                              <span className="truncate max-w-[120px] flex items-center gap-1">
-                                <Building2 className="w-3 h-3 inline text-slate-400" />
-                                {doc.client}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* الموضوع (Chapter) */}
-                    <td className="py-4 px-4 whitespace-nowrap">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 text-xs font-bold border border-slate-200/80">
-                        <BookOpen className="w-3 h-3 text-brand-600" />
-                        <span>{doc.chapterName || 'شؤون عامة'}</span>
-                      </div>
-                    </td>
-
-                    {/* المجلد والفاصل (Binder & Separation) */}
-                    <td className="py-4 px-4">
-                      <div className="flex items-center gap-1.5 text-slate-800 font-bold">
-                        <span className="font-mono text-[11px] font-black bg-slate-900 text-white px-1.5 py-0.2 rounded">
-                          {doc.binderCode || 'B01'}
+                    {/* Code */}
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5">
+                        <span 
+                          className="w-2.5 h-2.5 rounded-full shrink-0" 
+                          style={{ backgroundColor: sep.color || '#38bdf8' }}
+                        />
+                        <span className="font-mono font-bold text-xs bg-slate-900 text-white px-2 py-0.5 rounded shadow-2xs">
+                          {sep.code}
                         </span>
-                        <span className="truncate max-w-[150px]">{doc.binderName}</span>
-                      </div>
-                      <div className="text-[11px] text-brand-700 font-semibold mt-0.5 flex items-center gap-1">
-                        <Layers className="w-3 h-3" />
-                        <span className="truncate max-w-[150px]">{doc.separationName || doc.folderTab || 'فاصل عام'}</span>
                       </div>
                     </td>
 
-                    {/* الموقع (Location) */}
-                    <td className="py-4 px-4 whitespace-nowrap">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-900 text-xs font-bold border border-blue-200/70">
-                        <MapPin className="w-3.5 h-3.5 text-brand-600" />
-                        <span>{doc.location || `${doc.cabinet || 'خزانة أ'} - ${doc.shelf || 'رف 3'}`}</span>
+                    {/* Title */}
+                    <td className="py-3.5 px-4">
+                      <div className="font-bold text-slate-900 group-hover:text-blue-700 transition-colors max-w-xs truncate">
+                        {sep.name}
                       </div>
-                    </td>
-
-                    {/* التاريخ (Date) */}
-                    <td className="py-4 px-4 whitespace-nowrap">
-                      <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600 font-mono">
-                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{doc.date}</span>
-                      </div>
-                    </td>
-
-                    {/* الحالة (Status Badge - Clickable toggle) */}
-                    <td className="py-4 px-4 text-center whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onToggleStatus(doc);
-                        }}
-                        title="انقر لتغيير الحالة فورياً (متاح / مستعار)"
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black transition-all transform active:scale-95 shadow-xs cursor-pointer ${
-                          isAvailable
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100'
-                            : 'bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100'
-                        }`}
-                      >
-                        <span className={`w-2 h-2 rounded-full ${isAvailable ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`}></span>
-                        <span>{isAvailable ? '🟢 متاح' : '🟡 مستعار'}</span>
-                      </button>
-                      
-                      {!isAvailable && doc.borrower && (
-                        <div className="text-[10px] text-amber-700 font-medium mt-1 truncate max-w-[120px] mx-auto">
-                          مع: {doc.borrower.split(' ')[0]}
+                      {sep.description && (
+                        <div className="text-[10px] text-slate-500 truncate max-w-xs mt-0.5">
+                          {sep.description}
                         </div>
                       )}
                     </td>
 
-                    {/* إجراءات (Actions) */}
-                    <td className="py-4 px-4 text-center whitespace-nowrap">
-                      <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
+                    {/* Chapter */}
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 text-slate-800 text-[11px] font-bold border border-slate-200">
+                        <BookOpen className="w-3 h-3 text-blue-600" />
+                        <span>{sep.chapterName || 'عام'}</span>
+                      </div>
+                    </td>
+
+                    {/* Binder */}
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-800 font-bold">
+                        <span className="font-mono text-[10px] bg-blue-50 text-blue-800 border border-blue-200 px-1.5 py-0.2 rounded">
+                          {sep.binderCode || 'B01'}
+                        </span>
+                        <span className="truncate max-w-[140px]">{sep.binderName}</span>
+                      </div>
+                    </td>
+
+                    {/* Location */}
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-50 text-blue-900 text-[11px] font-bold border border-blue-200">
+                        <MapPin className="w-3 h-3 text-blue-600" />
+                        <span>{sep.location || `${sep.cabinet || 'خزانة أ'} - ${sep.shelf || 'رف 3'}`}</span>
+                      </div>
+                    </td>
+
+                    {/* Papers Count */}
+                    <td className="py-3.5 px-4 whitespace-nowrap font-mono text-xs text-slate-700">
+                      {sep.papersCount || 20} ورقة
+                    </td>
+
+                    {/* Date */}
+                    <td className="py-3.5 px-4 whitespace-nowrap font-mono text-xs text-slate-500">
+                      {sep.date}
+                    </td>
+
+                    {/* Status */}
+                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                      <button
+                        type="button"
+                        onClick={() => onToggleStatus(sep)}
+                        title="انقر لتسجيل الإعارة أو الاسترداد"
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-bold border transition-colors cursor-pointer ${
+                          isAvailable
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                            : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+                        }`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${isAvailable ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                        <span>{isAvailable ? '🟢 متاح' : '🟡 مستعار'}</span>
+                      </button>
+                      
+                      {!isAvailable && sep.borrower && (
+                        <div className="text-[9px] text-amber-700 font-medium mt-0.5 truncate max-w-[110px] mx-auto">
+                          مع: {sep.borrower.split(' ')[0]}
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Actions */}
+                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-1">
                         <button
                           type="button"
-                          onClick={() => onSelectDoc(doc)}
-                          title="تحديد الوثيقة"
-                          className={`p-1.5 rounded-lg transition-colors ${
-                            isSelected 
-                              ? 'bg-brand-600 text-white' 
-                              : 'text-slate-400 hover:text-brand-600 hover:bg-slate-100'
-                          }`}
+                          onClick={() => onOpenQRModal(sep)}
+                          title="عرض رمز QR الفاصل"
+                          className="p-1 rounded text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
                         >
-                          <Eye className="w-4 h-4" />
+                          <QrCode className="w-3.5 h-3.5" />
                         </button>
 
                         <button
                           type="button"
-                          onClick={() => {
-                            onSelectDoc(doc);
-                            onOpenQRModal(doc);
-                          }}
-                          title="عرض رمز QR ومسحه بالجوال"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-slate-100 transition-colors"
+                          onClick={() => onOpenPrintModal(sep)}
+                          title="طباعة ملصق تبويب الفاصل"
+                          className="p-1 rounded text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
                         >
-                          <QrCode className="w-4 h-4" />
+                          <Printer className="w-3.5 h-3.5" />
                         </button>
 
                         <button
                           type="button"
-                          onClick={() => onDeleteDoc(doc.id)}
-                          title="حذف الوثيقة من الأرشيف"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                          onClick={() => onDeleteSeparator(sep.id)}
+                          title="حذف الفاصل"
+                          className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </td>
@@ -297,13 +272,10 @@ export default function DocumentsTable({
               })
             ) : (
               <tr>
-                <td colSpan="7" className="py-12 text-center text-slate-500">
+                <td colSpan="9" className="py-12 text-center text-slate-500">
                   <div className="flex flex-col items-center justify-center">
-                    <AlertCircle className="w-10 h-10 text-slate-400 mb-2" />
-                    <p className="text-base font-bold text-slate-700">لم يتم العثور على وثائق مطابقة</p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      جرب تغيير مصطلح البحث أو اختيار فلتر مختلف
-                    </p>
+                    <AlertCircle className="w-8 h-8 text-slate-400 mb-1.5" />
+                    <p className="text-xs font-bold text-slate-700">لم يتم العثور على فواصل مطابقة</p>
                   </div>
                 </td>
               </tr>
@@ -313,10 +285,10 @@ export default function DocumentsTable({
       </div>
 
       {/* Pagination Footer */}
-      {filteredDocuments.length > itemsPerPage && (
-        <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+      {filteredSeparators.length > itemsPerPage && (
+        <div className="p-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
           <div>
-            عرض {paginatedDocs.length} من أصل {filteredDocuments.length} وثيقة
+            عرض {paginatedItems.length} من أصل {filteredSeparators.length} فاصل
           </div>
           
           <div className="flex items-center gap-1.5">
@@ -324,9 +296,9 @@ export default function DocumentsTable({
               type="button"
               disabled={currentPage === 1}
               onClick={() => handlePageChange(currentPage - 1)}
-              className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+              className="p-1 rounded border border-slate-200 hover:bg-slate-50 disabled:opacity-40 transition-colors"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
             
             <span className="px-2 font-bold text-slate-800">
@@ -337,9 +309,9 @@ export default function DocumentsTable({
               type="button"
               disabled={currentPage === totalPages}
               onClick={() => handlePageChange(currentPage + 1)}
-              className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+              className="p-1 rounded border border-slate-200 hover:bg-slate-50 disabled:opacity-40 transition-colors"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

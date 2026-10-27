@@ -97,7 +97,7 @@ export default function Navbar({
               id="global-archive-search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="ابحث برقم الوثيقة، اسم المجلد، كود الفاصل، أو اسم العميل..."
+              placeholder="ابحث بكود الفاصل، اسم المجلد، عنوان الموضوع، أو اسم العميل..."
               className="w-full pl-10 pr-9 py-2 bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-xs sm:text-sm text-slate-800 placeholder-slate-400 rounded-lg border border-slate-200 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all outline-hidden"
             />
 
@@ -171,8 +171,8 @@ export default function Navbar({
                     <span className="font-semibold text-slate-900">مدير كامل (Admin)</span>
                   </div>
                   <div className="px-3.5 py-1.5 flex items-center justify-between">
-                    <span>إجمالي الوثائق:</span>
-                    <span className="font-bold text-slate-900">{docsCount} وثيقة</span>
+                    <span>إجمالي الفواصل:</span>
+                    <span className="font-bold text-slate-900">{docsCount} فاصل</span>
                   </div>
                 </div>
               </div>

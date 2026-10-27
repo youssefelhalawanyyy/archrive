@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, QrCode, FileText, CheckCircle2, Clock, Sparkles } from 'lucide-react';
+import { Plus, QrCode, Layers, CheckCircle2, Clock, Sparkles } from 'lucide-react';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import DocumentsTable from './components/DocumentsTable';
 import ChaptersHierarchyView from './components/ChaptersHierarchyView';
-import AddDocumentModal from './components/AddDocumentModal';
 import AddChapterModal from './components/AddChapterModal';
 import AddBinderModal from './components/AddBinderModal';
 import AddSeparationModal from './components/AddSeparationModal';
@@ -20,64 +19,51 @@ import {
   addChapter,
   getBinders,
   addBinder,
-  addSeparationToBinder,
-  subscribeToDocuments, 
-  addDocument, 
-  toggleDocumentStatus, 
-  deleteDocument, 
+  getSeparators,
+  addSeparator,
+  subscribeToSeparators,
+  toggleSeparatorStatus,
+  deleteSeparator,
   getAuditLogs,
 } from './services/firebase';
 
 export default function App() {
   const [chapters, setChapters] = useState([]);
   const [binders, setBinders] = useState([]);
-  const [documents, setDocuments] = useState([]);
+  const [separators, setSeparators] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Start with 'hierarchy' (الموضوعات والأرشيف) as requested:
-  // "i want to make it to be start with el mawdoo3 (the chapter) first"
+  // Start with hierarchy view: Chapter -> Binder -> Separator
   const [currentTab, setCurrentTab] = useState('hierarchy'); 
   
-  // Selected Document & Binder for the Digital Twin
-  const [selectedDocId, setSelectedDocId] = useState(null);
-  const [selectedBinderId, setSelectedBinderId] = useState('binder-1');
-
   // Modals state
-  const [isAddDocModalOpen, setIsAddDocModalOpen] = useState(false);
   const [isAddChapterModalOpen, setIsAddChapterModalOpen] = useState(false);
   const [isAddBinderModalOpen, setIsAddBinderModalOpen] = useState(false);
   const [isAddSeparationModalOpen, setIsAddSeparationModalOpen] = useState(false);
   const [targetBinderForSeparation, setTargetBinderForSeparation] = useState(null);
   const [targetChapterForBinder, setTargetChapterForBinder] = useState(null);
-  const [docInitialContext, setDocInitialContext] = useState(null);
 
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
-  const [targetCheckoutDoc, setTargetCheckoutDoc] = useState(null);
+  const [targetCheckoutItem, setTargetCheckoutItem] = useState(null);
   const [targetQRItem, setTargetQRItem] = useState(null);
 
-  // Initialize data & subscribe to Firestore / local sync
+  // Initialize data & subscribe to sync
   useEffect(() => {
     // 1. Chapters
-    const loadedChapters = getChapters();
-    setChapters(loadedChapters);
+    setChapters(getChapters());
 
     // 2. Binders
-    const loadedBinders = getBinders();
-    setBinders(loadedBinders);
+    setBinders(getBinders());
 
     // 3. Audit logs
-    const loadedLogs = getAuditLogs();
-    setAuditLogs(loadedLogs);
+    setAuditLogs(getAuditLogs());
 
-    // 4. Documents with real-time sync
-    const unsubscribe = subscribeToDocuments((docs) => {
-      setDocuments(docs);
-      if (docs.length > 0 && !selectedDocId) {
-        setSelectedDocId(docs[0].id);
-      }
+    // 4. Separators subscription
+    const unsubscribe = subscribeToSeparators((seps) => {
+      setSeparators(seps);
     });
 
     return () => {
@@ -85,36 +71,15 @@ export default function App() {
     };
   }, []);
 
-  // Selected document object & active binder
-  const selectedDoc = documents.find(d => d.id === selectedDocId) || documents[0] || null;
-  const selectedBinder = binders.find(b => b.id === (selectedDoc?.binderId || selectedBinderId)) || binders[0] || null;
-
-  // Handle Document Selection
-  const handleSelectDoc = (doc) => {
-    setSelectedDocId(doc.id);
-    if (doc.binderId) {
-      setSelectedBinderId(doc.binderId);
-    }
-  };
-
-  // Handle Binder Selection
-  const handleSelectBinder = (binder) => {
-    setSelectedBinderId(binder.id);
-    const docInBinder = documents.find(d => d.binderId === binder.id);
-    if (docInBinder) {
-      setSelectedDocId(docInBinder.id);
-    }
-  };
-
-  // Status Toggle
-  const handleOpenStatusToggle = (doc) => {
-    setTargetCheckoutDoc(doc);
+  // Status Toggle for a Separator
+  const handleOpenStatusToggle = (item) => {
+    setTargetCheckoutItem(item);
     setIsCheckoutModalOpen(true);
   };
 
-  const handleConfirmStatusToggle = async (docId, details) => {
-    const updated = await toggleDocumentStatus(docId, details);
-    setDocuments(updated);
+  const handleConfirmStatusToggle = async (itemId, details) => {
+    const updated = await toggleSeparatorStatus(itemId, details);
+    setSeparators(updated);
     setAuditLogs(getAuditLogs());
   };
 
@@ -126,64 +91,45 @@ export default function App() {
 
   // Add Binder
   const handleAddBinder = async (binderData) => {
-    const { updatedBinders, newBinder } = await addBinder(binderData);
+    const { updatedBinders } = await addBinder(binderData);
     setBinders(updatedBinders);
     setChapters(getChapters());
-    setSelectedBinderId(newBinder.id);
   };
 
-  // Add Separation
-  const handleAddSeparation = async (binderId, sepData) => {
-    const { updatedBinders } = await addSeparationToBinder(binderId, sepData);
-    setBinders(updatedBinders);
-  };
-
-  // Add Document
-  const handleAddDocument = async (newDoc) => {
-    await addDocument(newDoc);
-    setDocuments(prev => [newDoc, ...prev.filter(d => d.id !== newDoc.id)]);
+  // Add Separator
+  const handleAddSeparator = async (sepData) => {
+    await addSeparator(sepData);
+    setSeparators(getSeparators());
     setBinders(getBinders());
-    setSelectedDocId(newDoc.id);
     setAuditLogs(getAuditLogs());
   };
 
-  // Open Add Document with Context
-  const handleOpenAddDocWithContext = (chapter, binder, separation) => {
-    setDocInitialContext({
-      chapterId: chapter?.id,
-      binderId: binder?.id,
-      separationId: separation?.id
-    });
-    setIsAddDocModalOpen(true);
-  };
-
-  // Delete Document
-  const handleDeleteDoc = async (id) => {
-    if (window.confirm("هل أنت متأكد من رغبتك في حذف هذه الوثيقة من سجل الأرشيف؟")) {
-      const updated = await deleteDocument(id);
-      setDocuments(updated);
+  // Delete Separator
+  const handleDeleteSeparator = async (id) => {
+    if (window.confirm("هل أنت متأكد من رغبتك في حذف هذا الفاصل من سجل الأرشيف؟")) {
+      const updated = await deleteSeparator(id);
+      setSeparators(updated);
+      setBinders(getBinders());
       setAuditLogs(getAuditLogs());
-      if (selectedDocId === id && updated.length > 0) {
-        setSelectedDocId(updated[0].id);
-      }
     }
   };
 
   // Open QR Scanner modal
   const handleOpenQRModal = (item = null) => {
-    setTargetQRItem(item || selectedDoc || selectedBinder);
+    setTargetQRItem(item || separators[0] || binders[0]);
     setIsQRModalOpen(true);
   };
 
-  // Open Spine Label modal
-  const handleOpenPrintModal = (binder = null) => {
+  // Open Print Spine/Tab modal
+  const handleOpenPrintModal = (item = null) => {
+    setTargetQRItem(item || separators[0] || binders[0]);
     setIsPrintModalOpen(true);
   };
 
   // Stats calculation
-  const totalDocs = documents.length;
-  const checkedOutCount = documents.filter(d => d.status === 'checked_out').length;
-  const availableCount = totalDocs - checkedOutCount;
+  const totalSeparators = separators.length;
+  const checkedOutCount = separators.filter(s => s.status === 'checked_out').length;
+  const availableCount = totalSeparators - checkedOutCount;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-cairo" dir="rtl">
@@ -192,11 +138,7 @@ export default function App() {
       <Navbar
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        onOpenAddModal={() => {
-          setDocInitialContext(null);
-          setIsAddDocModalOpen(true);
-        }}
-        docsCount={totalDocs}
+        docsCount={totalSeparators}
       />
 
       {/* Main Workspace: Sidebar (Right) + Content Area (Left) */}
@@ -207,11 +149,11 @@ export default function App() {
           currentTab={currentTab}
           setCurrentTab={setCurrentTab}
           onOpenAddModal={() => {
-            setDocInitialContext(null);
-            setIsAddDocModalOpen(true);
+            setTargetBinderForSeparation(null);
+            setIsAddSeparationModalOpen(true);
           }}
           stats={{
-            totalDocs,
+            totalDocs: totalSeparators,
             checkedOutCount,
             availableCount,
             bindersCount: binders.length,
@@ -222,12 +164,12 @@ export default function App() {
         {/* 3. Main Content Area */}
         <main className="flex-1 p-5 lg:p-7 overflow-y-auto max-w-[1550px] mx-auto w-full space-y-5">
           
-          {/* TAB 1: Hierarchical View (الموضوعات والأرشيف) - Starts with el mawdoo3 first! */}
+          {/* TAB 1: Hierarchical View (الموضوعات والأرشيف) - Chapter -> Binder -> Separators */}
           {currentTab === 'hierarchy' && (
             <ChaptersHierarchyView
               chapters={chapters}
               binders={binders}
-              documents={documents}
+              separators={separators}
               onOpenAddChapterModal={() => setIsAddChapterModalOpen(true)}
               onOpenAddBinderModal={(chapterId) => {
                 setTargetChapterForBinder(chapterId);
@@ -237,97 +179,92 @@ export default function App() {
                 setTargetBinderForSeparation(binder);
                 setIsAddSeparationModalOpen(true);
               }}
-              onOpenAddDocWithContext={handleOpenAddDocWithContext}
-              onSelectDoc={(doc) => {
-                handleSelectDoc(doc);
-                setCurrentTab('dashboard');
-              }}
               onToggleStatus={handleOpenStatusToggle}
               onOpenQRModal={handleOpenQRModal}
+              onOpenPrintModal={handleOpenPrintModal}
+              onDeleteSeparator={handleDeleteSeparator}
             />
           )}
 
-          {/* TAB 2: Dashboard with Executive Overview + Recent Documents */}
+          {/* TAB 2: Dashboard with Executive Overview + Separators Table */}
           {currentTab === 'dashboard' && (
-            <div className="space-y-6">
+            <div className="space-y-5">
               
-              {/* Executive Archive Overview Header */}
-              <div className="bg-white rounded-3xl border border-slate-200/90 shadow-card p-5 lg:p-6 flex flex-col md:flex-row md:items-center justify-between gap-5">
+              {/* Executive Overview Header */}
+              <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-md bg-brand-50 text-brand-700 border border-brand-200">
-                      شركة المستقبل • قسم الأرشفة والتوثيق
+                    <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200">
+                      شركة المستقبل • قسم الأرشفة
                     </span>
                   </div>
-                  <h2 className="text-xl font-black text-slate-900 mt-1 font-cairo">
-                    سجل الوثائق والأرشيف العام
+                  <h2 className="text-lg font-black text-slate-900 mt-1">
+                    سجل الفواصل والأرشيف العام
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    إدارة شاملة لجميع الوثائق المودعة في الخزائن والمجلدات مع تتبع حالات الإعارة والاسترداد
+                    إدارة شاملة لجميع الفواصل الكرتونية المودعة في المجلدات مع تتبع حالات الإعارة الميدانية
                   </p>
                 </div>
 
-                {/* Quick Action Buttons */}
-                <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
+                <div className="flex items-center gap-2 self-start md:self-auto">
                   <button
                     type="button"
                     onClick={() => {
-                      setDocInitialContext(null);
-                      setIsAddDocModalOpen(true);
+                      setTargetBinderForSeparation(null);
+                      setIsAddSeparationModalOpen(true);
                     }}
-                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md shadow-brand-500/20 transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />
-                    <span>إيداع وثيقة جديدة</span>
+                    <span>إضافة فاصل جديد</span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => handleOpenQRModal(selectedDoc)}
-                    className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+                    onClick={() => handleOpenQRModal()}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
                   >
                     <QrCode className="w-4 h-4" />
-                    <span>مسح كود المجلد</span>
+                    <span>مسح كود</span>
                   </button>
                 </div>
               </div>
 
-              {/* Top Metrics Row */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-card">
-                  <div className="text-xs font-semibold text-slate-500">إجمالي الوثائق الورقية</div>
-                  <div className="text-2xl font-black text-slate-900 mt-1 font-cairo">{totalDocs}</div>
-                  <div className="text-[11px] text-brand-600 font-bold mt-1">مودعة في الأرشيف</div>
+              {/* Metrics Row */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+                <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-2xs">
+                  <div className="text-[11px] font-semibold text-slate-500">إجمالي الفواصل الكرتونية</div>
+                  <div className="text-xl font-black text-slate-900 mt-1 font-mono">{totalSeparators}</div>
+                  <div className="text-[10px] text-blue-700 font-bold mt-0.5">مودعة في المجلدات</div>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-card">
-                  <div className="text-xs font-semibold text-slate-500">المجلدات الفيزيائية</div>
-                  <div className="text-2xl font-black text-slate-900 mt-1 font-cairo">{binders.length}</div>
-                  <div className="text-[11px] text-slate-500 font-medium mt-1">موزعة على الأرفف</div>
+                <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-2xs">
+                  <div className="text-[11px] font-semibold text-slate-500">المجلدات الفيزيائية النشطة</div>
+                  <div className="text-xl font-black text-slate-900 mt-1 font-mono">{binders.length}</div>
+                  <div className="text-[10px] text-slate-500 font-medium mt-0.5">موزعة على الأرفف</div>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-card">
-                  <div className="text-xs font-semibold text-emerald-700">الوثائق المتاحة بالخزائن</div>
-                  <div className="text-2xl font-black text-emerald-700 mt-1 font-cairo">{availableCount}</div>
-                  <div className="text-[11px] text-emerald-600 font-bold mt-1">جاهزة للمطالعة</div>
+                <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-2xs">
+                  <div className="text-[11px] font-semibold text-emerald-700">الفواصل المتاحة بالخزائن</div>
+                  <div className="text-xl font-black text-emerald-700 mt-1 font-mono">{availableCount}</div>
+                  <div className="text-[10px] text-emerald-600 font-bold mt-0.5">جاهزة للمطالعة</div>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-card">
-                  <div className="text-xs font-semibold text-amber-800">الوثائق المستعارة ميدانياً</div>
-                  <div className="text-2xl font-black text-amber-700 mt-1 font-cairo">{checkedOutCount}</div>
-                  <div className="text-[11px] text-amber-800 font-bold mt-1">قيد المراجعة</div>
+                <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-2xs">
+                  <div className="text-[11px] font-semibold text-amber-800">الفواصل المستعارة ميدانياً</div>
+                  <div className="text-xl font-black text-amber-700 mt-1 font-mono">{checkedOutCount}</div>
+                  <div className="text-[10px] text-amber-800 font-bold mt-0.5">قيد المراجعة</div>
                 </div>
               </div>
 
-              {/* Recent Documents Table */}
+              {/* Separators Table */}
               <DocumentsTable
-                documents={documents}
+                separators={separators}
                 searchQuery={searchQuery}
-                selectedDocId={selectedDocId}
-                onSelectDoc={handleSelectDoc}
                 onToggleStatus={handleOpenStatusToggle}
-                onOpenQRModal={(doc) => handleOpenQRModal(doc)}
-                onDeleteDoc={handleDeleteDoc}
+                onOpenQRModal={handleOpenQRModal}
+                onOpenPrintModal={handleOpenPrintModal}
+                onDeleteSeparator={handleDeleteSeparator}
               />
 
             </div>
@@ -337,11 +274,8 @@ export default function App() {
           {currentTab === 'binders' && (
             <BindersView
               binders={binders}
-              documents={documents}
-              onSelectBinder={(binder) => {
-                handleSelectBinder(binder);
-                setCurrentTab('dashboard');
-              }}
+              separators={separators}
+              onSelectBinder={() => setCurrentTab('hierarchy')}
               onOpenQRModal={(b) => handleOpenQRModal(b)}
               onOpenPrintModal={(b) => handleOpenPrintModal(b)}
             />
@@ -351,15 +285,8 @@ export default function App() {
           {currentTab === 'cabinet-map' && (
             <CabinetMapView
               binders={binders}
-              documents={documents}
-              onSelectDoc={(doc) => {
-                handleSelectDoc(doc);
-                setCurrentTab('dashboard');
-              }}
-              onSelectBinder={(binder) => {
-                handleSelectBinder(binder);
-                setCurrentTab('dashboard');
-              }}
+              separators={separators}
+              onSelectBinder={() => setCurrentTab('hierarchy')}
             />
           )}
 
@@ -367,7 +294,7 @@ export default function App() {
           {currentTab === 'reports' && (
             <ReportsView
               auditLogs={auditLogs}
-              documents={documents}
+              separators={separators}
               onToggleStatus={handleOpenStatusToggle}
             />
           )}
@@ -392,43 +319,36 @@ export default function App() {
 
       <AddSeparationModal
         isOpen={isAddSeparationModalOpen}
-        onClose={() => setIsAddSeparationModalOpen(false)}
-        binder={targetBinderForSeparation}
-        onAddSeparation={handleAddSeparation}
-      />
-
-      <AddDocumentModal
-        isOpen={isAddDocModalOpen}
         onClose={() => {
-          setIsAddDocModalOpen(false);
-          setDocInitialContext(null);
+          setIsAddSeparationModalOpen(false);
+          setTargetBinderForSeparation(null);
         }}
-        onAddDocument={handleAddDocument}
         chapters={chapters}
         binders={binders}
-        initialContext={docInitialContext}
+        defaultBinder={targetBinderForSeparation}
+        onAddSeparator={handleAddSeparator}
       />
 
       <CheckoutModal
         isOpen={isCheckoutModalOpen}
         onClose={() => setIsCheckoutModalOpen(false)}
-        document={targetCheckoutDoc}
+        document={targetCheckoutItem}
         onConfirmToggle={handleConfirmStatusToggle}
       />
 
       <QRModal
         isOpen={isQRModalOpen}
         onClose={() => setIsQRModalOpen(false)}
-        targetItem={targetQRItem || selectedDoc}
-        targetBinder={selectedBinder}
+        targetItem={targetQRItem}
+        targetBinder={binders[0]}
         onToggleStatus={handleOpenStatusToggle}
       />
 
       <SpineLabelModal
         isOpen={isPrintModalOpen}
         onClose={() => setIsPrintModalOpen(false)}
-        binder={selectedBinder}
-        document={selectedDoc}
+        binder={binders[0]}
+        document={targetQRItem}
       />
 
     </div>

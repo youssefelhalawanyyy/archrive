@@ -16,14 +16,16 @@ import {
 
 export default function BindersView({ 
   binders = [], 
-  documents = [], 
+  separators = [], 
+  documents = [],
   onSelectBinder, 
   onOpenQRModal, 
-  onOpenPrintModal,
-  onOpenAddDocWithBinder 
+  onOpenPrintModal 
 }) {
   const [cabinetFilter, setCabinetFilter] = useState('all');
   const [search, setSearch] = useState('');
+
+  const activeItems = separators.length > 0 ? separators : documents;
 
   const filteredBinders = binders.filter((b) => {
     const matchesCabinet = cabinetFilter === 'all' || b.cabinet === cabinetFilter;
@@ -36,34 +38,34 @@ export default function BindersView({
   });
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="space-y-5 font-cairo">
       
       {/* Header Banner */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-card p-5 lg:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-brand-50 text-brand-600 border border-brand-200">
-              <FolderArchive className="w-5 h-5 stroke-[2.2]" />
+            <div className="p-2 rounded-lg bg-slate-900 text-white">
+              <FolderArchive className="w-5 h-5 text-blue-400 stroke-[2.2]" />
             </div>
-            <h2 className="text-xl font-black text-slate-900 font-cairo">
-              المجلدات النشطة والأرفف الفيزيائية
+            <h2 className="text-lg font-black text-slate-900">
+              المجلدات الفيزيائية والأرفف
             </h2>
           </div>
-          <p className="text-xs text-slate-600 mt-1">
-            إدارة ومتابعة المجلدات الكرتونية وسعتها الاستيعابية وتوزيعها على أرفف الخزائن
+          <p className="text-xs text-slate-500 mt-0.5">
+            متابعة المجلدات وأكوادها وسعتها الاستيعابية من الفواصل الكرتونية
           </p>
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           {['all', 'خزانة أ', 'خزانة ب', 'خزانة ج'].map((cab) => (
             <button
               key={cab}
               type="button"
               onClick={() => setCabinetFilter(cab)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 cabinetFilter === cab
-                  ? 'bg-brand-600 text-white shadow-xs'
+                  ? 'bg-blue-700 text-white shadow-2xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -74,68 +76,65 @@ export default function BindersView({
       </div>
 
       {/* Binders Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredBinders.map((binder) => {
-          // Count documents belonging to this binder
-          const binderDocs = documents.filter(d => d.binderId === binder.id);
-          const docsCount = binderDocs.length || binder.currentDocsCount || 0;
-          const capacityPercentage = Math.min(100, Math.round((docsCount / binder.totalCapacity) * 100));
-          const checkedOutInBinder = binderDocs.filter(d => d.status === 'checked_out').length;
+          const binderSeps = activeItems.filter(s => s.binderId === binder.id || s.binderCode === binder.code);
+          const sepsCount = binderSeps.length || binder.currentSeparatorsCount || 0;
+          const capacity = binder.totalCapacity || 10;
+          const capacityPercentage = Math.min(100, Math.round((sepsCount / capacity) * 100));
+          const checkedOutInBinder = binderSeps.filter(s => s.status === 'checked_out').length;
 
           return (
             <div
               key={binder.id}
-              className="bg-white rounded-2xl border border-slate-200/90 shadow-card hover:shadow-lg transition-all p-5 flex flex-col justify-between group relative overflow-hidden"
+              className="bg-white rounded-xl border border-slate-200 shadow-2xs hover:shadow-xs transition-all p-4 flex flex-col justify-between group relative overflow-hidden"
             >
-              {/* Binder Color accent bar */}
               <div 
-                className="absolute top-0 right-0 left-0 h-1.5" 
+                className="absolute top-0 right-0 left-0 h-1" 
                 style={{ backgroundColor: binder.color || '#0284c7' }}
               />
 
               <div>
                 {/* Top Location & Code */}
-                <div className="flex items-center justify-between text-xs mb-3 pt-1">
-                  <div className="flex items-center gap-1.5 font-bold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
-                    <MapPin className="w-3.5 h-3.5 text-brand-600" />
+                <div className="flex items-center justify-between text-xs mb-2 pt-0.5">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-[11px]">
+                    <MapPin className="w-3 h-3 text-blue-600" />
                     <span>{binder.cabinet} • {binder.shelf}</span>
                   </div>
-                  <span className="font-mono text-[11px] font-bold text-slate-600 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                  <span className="font-mono text-xs font-black bg-slate-900 text-white px-2 py-0.5 rounded shadow-2xs">
                     {binder.code}
                   </span>
                 </div>
 
                 {/* Binder Title */}
-                <h3 className="text-base font-black text-slate-900 group-hover:text-brand-700 transition-colors">
+                <h3 className="text-sm font-black text-slate-900 group-hover:text-blue-700 transition-colors">
                   {binder.name}
                 </h3>
-                <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">
+                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">
                   {binder.description}
                 </p>
 
-                {/* Stats: Docs Count & Checked Out */}
-                <div className="grid grid-cols-2 gap-2 my-4">
-                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-center">
-                    <div className="text-base font-black text-slate-900">{docsCount}</div>
-                    <div className="text-[11px] text-slate-600">وثيقة ورقية</div>
+                {/* Stats */}
+                <div className="grid grid-cols-2 gap-2 my-3">
+                  <div className="p-2 rounded bg-slate-50 border border-slate-100 text-center">
+                    <div className="text-sm font-black text-slate-900 font-mono">{sepsCount}</div>
+                    <div className="text-[10px] text-slate-500">فاصل كرتوني</div>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-amber-50/60 border border-amber-100 text-center">
-                    <div className="text-base font-black text-amber-700">{checkedOutInBinder}</div>
-                    <div className="text-[11px] text-amber-800">مستعارة حالياً</div>
+                  <div className="p-2 rounded bg-slate-50 border border-slate-100 text-center">
+                    <div className="text-sm font-black text-amber-700 font-mono">{checkedOutInBinder}</div>
+                    <div className="text-[10px] text-slate-500">مستعارة حالياً</div>
                   </div>
                 </div>
 
                 {/* Capacity Progress Bar */}
-                <div className="space-y-1 mb-4">
-                  <div className="flex items-center justify-between text-[11px] text-slate-600">
+                <div className="space-y-1 mb-3">
+                  <div className="flex items-center justify-between text-[10px] text-slate-500">
                     <span>نسبة امتلاء المجلد:</span>
-                    <span className="font-bold text-slate-700">{capacityPercentage}% ({docsCount}/{binder.totalCapacity})</span>
+                    <span className="font-bold text-slate-700 font-mono">{capacityPercentage}% ({sepsCount}/{capacity} فواصل)</span>
                   </div>
-                  <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                  <div className="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden">
                     <div 
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        capacityPercentage > 85 ? 'bg-red-500' : capacityPercentage > 60 ? 'bg-amber-500' : 'bg-brand-600'
-                      }`}
+                      className="h-full rounded-full bg-blue-600 transition-all duration-500"
                       style={{ width: `${capacityPercentage}%` }}
                     />
                   </div>

@@ -8,18 +8,15 @@ import {
   updateDoc, 
   deleteDoc, 
   onSnapshot,
-  query,
-  orderBy,
   serverTimestamp 
 } from "firebase/firestore";
 import { 
   initialChapters, 
   initialBinders, 
-  initialDocuments, 
+  initialSeparators, 
   initialAuditLogs 
 } from "../data/initialData";
 
-// User's exact Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyC3Lt0xKAwasvKR8jfKgAjZUNm-jq2palo",
   authDomain: "archrive-5798a.firebaseapp.com",
@@ -38,14 +35,14 @@ try {
   db = getFirestore(app);
   isFirestoreAvailable = true;
 } catch (err) {
-  console.warn("Firebase initialization warning (using local archive storage fallback):", err);
+  console.warn("Firebase fallback notice:", err);
 }
 
 // LocalStorage Keys
-const STORAGE_CHAPTERS = "archive_chapters_v2";
-const STORAGE_BINDERS = "archive_binders_v2";
-const STORAGE_DOCS = "archive_documents_v2";
-const STORAGE_LOGS = "archive_audit_logs_v2";
+const STORAGE_CHAPTERS = "archive_chapters_v3";
+const STORAGE_BINDERS = "archive_binders_v3";
+const STORAGE_SEPARATORS = "archive_separators_v3";
+const STORAGE_LOGS = "archive_audit_logs_v3";
 
 const getLocal = (key, fallback) => {
   try {
@@ -63,12 +60,10 @@ const getLocal = (key, fallback) => {
 const setLocal = (key, value) => {
   try {
     localStorage.setItem(key, JSON.stringify(value));
-  } catch (e) {
-    console.error("Local storage save error:", e);
-  }
+  } catch (e) {}
 };
 
-// ================= CHAPTERS (الموضوعات / الأبواب) =================
+// ================= CHAPTERS (الموضوعات) =================
 export const getChapters = () => {
   return getLocal(STORAGE_CHAPTERS, initialChapters);
 };
@@ -83,7 +78,7 @@ export const addChapter = async (newChapter) => {
     id: chapterId,
     code: code,
     bindersCount: 0,
-    docsCount: 0
+    separatorsCount: 0
   };
 
   const updated = [...chapters, item];
@@ -93,20 +88,17 @@ export const addChapter = async (newChapter) => {
     try {
       const cRef = doc(db, "chapters", chapterId);
       await setDoc(cRef, item);
-    } catch (e) {
-      console.warn("Firestore chapter sync notice:", e.message);
-    }
+    } catch (e) {}
   }
 
   return updated;
 };
 
-// ================= BINDERS (المجلدات تحت الموضوع) =================
+// ================= BINDERS (المجلدات) =================
 export const getBinders = () => {
   return getLocal(STORAGE_BINDERS, initialBinders);
 };
 
-// Auto-generate easy clean code for binders under a chapter (e.g. FIN-01, FIN-02)
 export const generateNextBinderCode = (chapterCode) => {
   const binders = getBinders();
   const chapterBinders = binders.filter(b => b.chapterCode === chapterCode);
@@ -122,7 +114,6 @@ export const addBinder = async (newBinder) => {
   const binders = getBinders();
   const binderId = newBinder.id || `binder-${Date.now()}`;
   
-  // Ensure auto-generated code if not provided
   let code = newBinder.code;
   let number = newBinder.number;
   if (!code && newBinder.chapterCode) {
@@ -136,12 +127,9 @@ export const addBinder = async (newBinder) => {
     id: binderId,
     code: code,
     number: number || 1,
-    currentDocsCount: 0,
-    totalCapacity: newBinder.totalCapacity || 200,
+    currentSeparatorsCount: newBinder.separations?.length || 0,
+    totalCapacity: newBinder.totalCapacity || 10,
     status: "نشط",
-    separations: newBinder.separations || [
-      { id: `sep-${binderId}-1`, number: 1, code: `${code}-S01`, name: "فاصل 1 (قسم عام)", color: "#38bdf8", docsCount: 0 }
-    ],
     qrCode: `ARC-${code}`,
     barcode: `${Math.floor(100000000000 + Math.random() * 900000000000)}`
   };
@@ -149,7 +137,35 @@ export const addBinder = async (newBinder) => {
   const updated = [item, ...binders];
   setLocal(STORAGE_BINDERS, updated);
 
-  // Update chapter's binder count
+  // If initial separations were created, add them into separators storage too
+  if (newBinder.separations && newBinder.separations.length > 0) {
+    const existingSeps = getSeparators();
+    const formattedInitialSeps = newBinder.separations.map((s, idx) => ({
+      id: s.id || `sep-${Date.now()}-${idx}`,
+      code: s.code || `${code}-S${(idx + 1).toString().padStart(2, '0')}`,
+      name: s.name || `فاصل ${idx + 1}`,
+      chapterId: item.chapterId,
+      chapterName: item.chapterName,
+      chapterCode: item.chapterCode,
+      binderId: item.id,
+      binderName: item.name,
+      binderCode: item.code,
+      cabinet: item.cabinet,
+      shelf: item.shelf,
+      location: `${item.cabinet} - ${item.shelf}`,
+      color: s.color || '#38bdf8',
+      papersCount: 20,
+      date: new Date().toISOString().split('T')[0].replace(/-/g, '/'),
+      status: "available",
+      client: "عام",
+      description: `فاصل كرتوني داخل مجلد ${item.name}`,
+      qrCode: `ARC-${s.code || `${code}-S${(idx + 1).toString().padStart(2, '0')}`}`,
+      barcode: `${Math.floor(100000000000 + Math.random() * 900000000000)}`,
+      createdAt: new Date().toISOString()
+    }));
+    setLocal(STORAGE_SEPARATORS, [...formattedInitialSeps, ...existingSeps]);
+  }
+
   const chapters = getChapters();
   const updatedChapters = chapters.map(c => 
     c.id === newBinder.chapterId ? { ...c, bindersCount: (c.bindersCount || 0) + 1 } : c
@@ -160,81 +176,48 @@ export const addBinder = async (newBinder) => {
     try {
       const bRef = doc(db, "binders", binderId);
       await setDoc(bRef, item);
-    } catch (e) {
-      console.warn("Firestore binder sync notice:", e.message);
-    }
+    } catch (e) {}
   }
 
   return { updatedBinders: updated, newBinder: item };
 };
 
-// ================= SEPARATIONS (الفواصل / التبويبات داخل المجلد) =================
-export const generateNextSeparationCode = (binder) => {
-  const existing = binder?.separations || [];
-  const nextNum = existing.length + 1;
+// ================= SEPARATORS (الفواصل داخل المجلدات) =================
+export const getSeparators = () => {
+  return getLocal(STORAGE_SEPARATORS, initialSeparators);
+};
+
+export const generateNextSeparatorCode = (binder) => {
+  const separators = getSeparators();
+  const binderSeparators = separators.filter(s => s.binderId === binder?.id || s.binderCode === binder?.code);
+  const nextNum = binderSeparators.length + 1;
   const formattedNum = nextNum.toString().padStart(2, '0');
   return {
-    code: `${binder.code}-S${formattedNum}`,
+    code: `${binder?.code || 'BIN-01'}-S${formattedNum}`,
     number: nextNum
   };
 };
 
-export const addSeparationToBinder = async (binderId, separationData) => {
-  const binders = getBinders();
-  const binder = binders.find(b => b.id === binderId);
-  if (!binder) return binders;
-
-  const generated = generateNextSeparationCode(binder);
-  const sepItem = {
-    id: `sep-${Date.now()}`,
-    number: generated.number,
-    code: separationData.code || generated.code,
-    name: separationData.name || `فاصل ${generated.number}`,
-    color: separationData.color || '#0ea5e9',
-    docsCount: 0,
-    description: separationData.description || ''
-  };
-
-  const updatedSeparations = [...(binder.separations || []), sepItem];
-  const updatedBinders = binders.map(b => 
-    b.id === binderId ? { ...b, separations: updatedSeparations } : b
-  );
-  setLocal(STORAGE_BINDERS, updatedBinders);
-
-  if (db) {
-    try {
-      const bRef = doc(db, "binders", binderId);
-      await updateDoc(bRef, { separations: updatedSeparations });
-    } catch (e) {
-      console.warn("Firestore separation sync notice:", e.message);
-    }
-  }
-
-  return { updatedBinders, newSeparation: sepItem };
-};
-
-// ================= DOCUMENTS (الوثائق) =================
-export const subscribeToDocuments = (onUpdate, onError) => {
-  const localDocs = getLocal(STORAGE_DOCS, initialDocuments);
-  onUpdate(localDocs);
+export const subscribeToSeparators = (onUpdate, onError) => {
+  const localSeps = getLocal(STORAGE_SEPARATORS, initialSeparators);
+  onUpdate(localSeps);
 
   if (!isFirestoreAvailable || !db) {
     return () => {};
   }
 
   try {
-    const q = collection(db, "documents");
+    const q = collection(db, "separators");
     const unsubscribe = onSnapshot(q, (snapshot) => {
       if (!snapshot.empty) {
-        const remoteDocs = snapshot.docs.map(doc => ({
+        const remoteSeps = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
-        setLocal(STORAGE_DOCS, remoteDocs);
-        onUpdate(remoteDocs);
+        setLocal(STORAGE_SEPARATORS, remoteSeps);
+        onUpdate(remoteSeps);
       }
     }, (error) => {
-      console.warn("Firestore snapshot notice:", error.message);
       if (onError) onError(error);
     });
 
@@ -244,65 +227,51 @@ export const subscribeToDocuments = (onUpdate, onError) => {
   }
 };
 
-export const addDocument = async (newDoc) => {
-  const docId = newDoc.id || `doc-${Date.now()}`;
-  const fullDoc = {
-    ...newDoc,
-    id: docId,
+export const addSeparator = async (newSeparator) => {
+  const sepId = newSeparator.id || `sep-${Date.now()}`;
+  const fullSep = {
+    ...newSeparator,
+    id: sepId,
     createdAt: new Date().toISOString()
   };
 
-  const docs = getLocal(STORAGE_DOCS, initialDocuments);
-  const updatedDocs = [fullDoc, ...docs];
-  setLocal(STORAGE_DOCS, updatedDocs);
+  const seps = getLocal(STORAGE_SEPARATORS, initialSeparators);
+  const updatedSeps = [fullSep, ...seps];
+  setLocal(STORAGE_SEPARATORS, updatedSeps);
 
-  // Update binder docs count
-  if (fullDoc.binderId) {
-    const binders = getBinders();
-    const updatedBinders = binders.map(b => {
-      if (b.id === fullDoc.binderId) {
-        const updatedSeps = (b.separations || []).map(s => 
-          s.id === fullDoc.separationId ? { ...s, docsCount: (s.docsCount || 0) + 1 } : s
-        );
-        return {
-          ...b,
-          currentDocsCount: (b.currentDocsCount || 0) + 1,
-          separations: updatedSeps
-        };
-      }
-      return b;
-    });
-    setLocal(STORAGE_BINDERS, updatedBinders);
-  }
+  // Update binder's separators count
+  const binders = getBinders();
+  const updatedBinders = binders.map(b => 
+    b.id === fullSep.binderId ? { ...b, currentSeparatorsCount: (b.currentSeparatorsCount || 0) + 1 } : b
+  );
+  setLocal(STORAGE_BINDERS, updatedBinders);
 
   // Audit log
   await addAuditLog({
-    docId: docId,
-    docTitle: fullDoc.title,
+    docId: sepId,
+    docTitle: `${fullSep.name} (${fullSep.code})`,
     action: "create",
-    actionName: "إيداع وثيقة جديدة",
+    actionName: "إيداع فاصل ورقي جديد",
     performedBy: "أحمد",
     borrower: null,
     date: new Date().toISOString().replace('T', ' ').substring(0, 16),
-    reason: `إيداع في ${fullDoc.chapterName || 'الموضوع'} ← ${fullDoc.binderName} (${fullDoc.binderCode || ''}) ← ${fullDoc.separationName || 'فاصل'}`
+    reason: `إضافة فاصل في مجلد ${fullSep.binderName} (${fullSep.binderCode}) بموقع ${fullSep.location}`
   });
 
   if (db) {
     try {
-      const docRef = doc(db, "documents", docId);
-      await setDoc(docRef, fullDoc);
-    } catch (e) {
-      console.warn("Firestore document add notice:", e.message);
-    }
+      const docRef = doc(db, "separators", sepId);
+      await setDoc(docRef, fullSep);
+    } catch (e) {}
   }
 
-  return fullDoc;
+  return fullSep;
 };
 
-export const toggleDocumentStatus = async (id, borrowerDetails = null) => {
-  const docs = getLocal(STORAGE_DOCS, initialDocuments);
-  const target = docs.find(d => d.id === id);
-  if (!target) return docs;
+export const toggleSeparatorStatus = async (id, borrowerDetails = null) => {
+  const seps = getLocal(STORAGE_SEPARATORS, initialSeparators);
+  const target = seps.find(s => s.id === id);
+  if (!target) return seps;
 
   const isCheckingOut = target.status === "available";
   const newStatus = isCheckingOut ? "checked_out" : "available";
@@ -314,46 +283,51 @@ export const toggleDocumentStatus = async (id, borrowerDetails = null) => {
     dueDate: isCheckingOut ? (borrowerDetails?.dueDate || "2024/02/01") : null,
   };
 
-  const updatedDocs = docs.map(d => d.id === id ? { ...d, ...changes } : d);
-  setLocal(STORAGE_DOCS, updatedDocs);
+  const updatedSeps = seps.map(s => s.id === id ? { ...s, ...changes } : s);
+  setLocal(STORAGE_SEPARATORS, updatedSeps);
 
   await addAuditLog({
     docId: id,
-    docTitle: target.title,
+    docTitle: `${target.name} (${target.code})`,
     action: isCheckingOut ? "checkout" : "checkin",
-    actionName: isCheckingOut ? "إعارة وثيقة ورقية" : "إعادة وثيقة ورقية للأرشيف",
+    actionName: isCheckingOut ? "إعارة فاصل ورقي" : "إعادة فاصل للمجلد",
     performedBy: "أحمد",
     borrower: changes.borrower,
     date: new Date().toISOString().replace('T', ' ').substring(0, 16),
     reason: isCheckingOut 
       ? (borrowerDetails?.reason || "طلب استعارة من قبل الإدارة") 
-      : "تم إعادة الوثيقة وتدقيقها في مكانها داخل المجلد والفاصل"
+      : "تم إعادة الفاصل ومحتوياته إلى المجلد بالخزانة"
   });
 
   if (db) {
     try {
-      const docRef = doc(db, "documents", id);
+      const docRef = doc(db, "separators", id);
       await updateDoc(docRef, changes);
-    } catch (e) {
-      console.warn("Firestore toggle notice:", e.message);
-    }
+    } catch (e) {}
   }
 
-  return updatedDocs;
+  return updatedSeps;
 };
 
-export const deleteDocument = async (id) => {
-  const docs = getLocal(STORAGE_DOCS, initialDocuments);
-  const filtered = docs.filter(d => d.id !== id);
-  setLocal(STORAGE_DOCS, filtered);
+export const deleteSeparator = async (id) => {
+  const seps = getLocal(STORAGE_SEPARATORS, initialSeparators);
+  const target = seps.find(s => s.id === id);
+  const filtered = seps.filter(s => s.id !== id);
+  setLocal(STORAGE_SEPARATORS, filtered);
+
+  if (target?.binderId) {
+    const binders = getBinders();
+    const updatedBinders = binders.map(b => 
+      b.id === target.binderId ? { ...b, currentSeparatorsCount: Math.max(0, (b.currentSeparatorsCount || 1) - 1) } : b
+    );
+    setLocal(STORAGE_BINDERS, updatedBinders);
+  }
 
   if (db) {
     try {
-      const docRef = doc(db, "documents", id);
+      const docRef = doc(db, "separators", id);
       await deleteDoc(docRef);
-    } catch (e) {
-      console.warn("Firestore delete notice:", e.message);
-    }
+    } catch (e) {}
   }
   return filtered;
 };

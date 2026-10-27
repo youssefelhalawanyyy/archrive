@@ -28,7 +28,7 @@ export default function AddBinderModal({
   const [autoCode, setAutoCode] = useState('');
   const [cabinet, setCabinet] = useState('خزانة أ');
   const [shelf, setShelf] = useState('رف 3');
-  const [totalCapacity, setTotalCapacity] = useState(200);
+  const [totalCapacity, setTotalCapacity] = useState(10);
   const [description, setDescription] = useState('');
   const [separationsCount, setSeparationsCount] = useState(4); // Default 4 quarters or tabs
 
@@ -71,7 +71,7 @@ export default function AddBinderModal({
       code: autoCode,
       cabinet: cabinet,
       shelf: shelf,
-      totalCapacity: parseInt(totalCapacity) || 200,
+      totalCapacity: parseInt(totalCapacity) || 10,
       description: description.trim() || `مجلد فيزيائي تابع لباب ${currentChapter.name}`,
       color: currentChapter.color || '#0284c7',
       separations: initialSeps
@@ -196,15 +196,15 @@ export default function AddBinderModal({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                السعة الاستيعابية (وثيقة)
+                السعة القصوى (عدد الفواصل)
               </label>
               <input
                 type="number"
-                min="50"
-                max="500"
+                min="2"
+                max="30"
                 value={totalCapacity}
                 onChange={(e) => setTotalCapacity(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-left"
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold text-left font-mono"
               />
             </div>
 
@@ -215,7 +215,7 @@ export default function AddBinderModal({
               <select
                 value={separationsCount}
                 onChange={(e) => setSeparationsCount(parseInt(e.target.value))}
-                className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-bold"
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold"
               >
                 <option value={2}>2 فواصل (نصف سنوي)</option>
                 <option value={4}>4 فواصل (أرباع سنوية Q1-Q4)</option>
