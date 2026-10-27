@@ -40,10 +40,10 @@ try {
 }
 
 // LocalStorage Keys (Local fallback & instant render)
-const STORAGE_CHAPTERS = "archive_chapters_v4";
-const STORAGE_BINDERS = "archive_binders_v4";
-const STORAGE_SEPARATORS = "archive_separators_v4";
-const STORAGE_LOGS = "archive_audit_logs_v4";
+const STORAGE_CHAPTERS = "archive_chapters_v5";
+const STORAGE_BINDERS = "archive_binders_v5";
+const STORAGE_SEPARATORS = "archive_separators_v5";
+const STORAGE_LOGS = "archive_audit_logs_v5";
 
 // ================= SYNC STATUS MANAGEMENT =================
 let currentSyncStatus = isFirestoreAvailable ? "synced" : "offline"; // 'synced' | 'saving' | 'offline' | 'error'

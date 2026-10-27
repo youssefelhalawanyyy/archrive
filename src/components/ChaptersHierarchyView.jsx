@@ -35,7 +35,7 @@ export default function ChaptersHierarchyView({
   onOpenPrintModal,
   onDeleteSeparator
 }) {
-  const [selectedChapterId, setSelectedChapterId] = useState(chapters[0]?.id || 'ch-fin');
+  const [selectedChapterId, setSelectedChapterId] = useState(chapters[0]?.id || 'ch-amn');
   const [selectedBinderId, setSelectedBinderId] = useState(null);
   const [localSearch, setLocalSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'available', 'checked_out'

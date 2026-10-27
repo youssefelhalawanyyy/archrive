@@ -22,7 +22,7 @@ export default function AddBinderModal({
   if (!isOpen) return null;
 
   const [selectedChapterId, setSelectedChapterId] = useState(
-    defaultChapterId || chapters[0]?.id || 'ch-fin'
+    defaultChapterId || chapters[0]?.id || 'ch-amn'
   );
   const [name, setName] = useState('');
   const [autoCode, setAutoCode] = useState('');

@@ -1,30 +1,30 @@
 import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { 
-  X, 
-  Printer, 
-  Barcode, 
-  Building2, 
-  Layers, 
-  FolderArchive, 
-  FileText, 
-  Scissors, 
-  CheckCircle2, 
-  AlertTriangle, 
-  ShieldCheck, 
-  Calendar, 
-  MapPin, 
-  BookOpen, 
+import {
+  X,
+  Printer,
+  Barcode,
+  Building2,
+  Layers,
+  FolderArchive,
+  FileText,
+  Scissors,
+  CheckCircle2,
+  AlertTriangle,
+  ShieldCheck,
+  Calendar,
+  MapPin,
+  BookOpen,
   Eye,
   Sliders,
   Sparkles
 } from 'lucide-react';
 
-export default function SpineLabelModal({ 
-  isOpen, 
-  onClose, 
+export default function SpineLabelModal({
+  isOpen,
+  onClose,
   targetItem = null,
-  binder = null, 
+  binder = null,
   document = null,
   binders = [],
   separators = [],
@@ -38,8 +38,8 @@ export default function SpineLabelModal({
   // Determine whether the active item is a Binder or a Separator
   const isBinderInitial = !!(
     activeItem && (
-      activeItem.totalCapacity !== undefined || 
-      activeItem.currentSeparatorsCount !== undefined || 
+      activeItem.totalCapacity !== undefined ||
+      activeItem.currentSeparatorsCount !== undefined ||
       (!activeItem.papersCount && activeItem.code && !activeItem.code.includes('-S'))
     )
   );
@@ -56,13 +56,13 @@ export default function SpineLabelModal({
   const currentBinder = isBinderInitial
     ? activeItem
     : (binders.find(b => b.id === activeItem?.binderId || b.code === activeItem?.binderCode) || binders[0] || {
-        name: activeItem?.binderName || "الفواتير الضريبية 2024",
-        code: activeItem?.binderCode || "FIN-01",
-        cabinet: activeItem?.cabinet || "خزانة أ",
-        shelf: activeItem?.shelf || "رف 3",
-        chapterName: activeItem?.chapterName || "الحسابات والمالية",
-        chapterCode: activeItem?.chapterCode || "FIN"
-      });
+      name: activeItem?.binderName || "الفواتير الضريبية 2024",
+      code: activeItem?.binderCode || "FIN-01",
+      cabinet: activeItem?.cabinet || "خزانة أ",
+      shelf: activeItem?.shelf || "رف 3",
+      chapterName: activeItem?.chapterName || "الحسابات والمالية",
+      chapterCode: activeItem?.chapterCode || "FIN"
+    });
 
   // Resolve Chapter details
   const currentChapter = chapters.find(
@@ -76,14 +76,14 @@ export default function SpineLabelModal({
   const currentSeparator = !isBinderInitial
     ? activeItem
     : (separators.find(s => s.binderId === currentBinder.id || s.binderCode === currentBinder.code) || {
-        name: "فواتير الموردين - الربع الأول",
-        code: `${currentBinder?.code || 'FIN-01'}-S01`,
-        papersCount: 25,
-        color: "#38bdf8",
-        client: "هيئة الزكاة والضريبة والجمارك",
-        date: "2024/01/15",
-        description: "مستندات وفواتير مشتريات الربع الأول للتدقيق"
-      });
+      name: "فواتير الموردين - الربع الأول",
+      code: `${currentBinder?.code || 'FIN-01'}-S01`,
+      papersCount: 25,
+      color: "#38bdf8",
+      client: "هيئة الزكاة والضريبة والجمارك",
+      date: "2024/01/15",
+      description: "مستندات وفواتير مشتريات الربع الأول للتدقيق"
+    });
 
   // Separators belonging to this binder for the index table
   const binderSeparators = separators.filter(
@@ -103,12 +103,12 @@ export default function SpineLabelModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-xs animate-in fade-in duration-200">
-      
-      <div 
+
+      <div
         className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col font-cairo"
         onClick={(e) => e.stopPropagation()}
       >
-        
+
         {/* ================= MODAL HEADER ================= */}
         <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-white shrink-0">
           <div className="flex items-center gap-3">
@@ -142,16 +142,15 @@ export default function SpineLabelModal({
 
         {/* ================= TEMPLATE SELECTOR TABS ================= */}
         <div className="px-5 pt-3 bg-slate-50 flex flex-wrap items-center gap-2 border-b border-slate-200 shrink-0 text-xs font-bold">
-          
+
           {/* 1. Binder Index Sheet (A4) */}
           <button
             type="button"
             onClick={() => setPrintTemplate('binder-index')}
-            className={`flex items-center gap-2 px-3.5 py-2.5 border-b-2 cursor-pointer transition-all ${
-              printTemplate === 'binder-index'
-                ? 'border-blue-600 text-blue-900 bg-white rounded-t-xl font-extrabold shadow-2xs'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
+            className={`flex items-center gap-2 px-3.5 py-2.5 border-b-2 cursor-pointer transition-all ${printTemplate === 'binder-index'
+              ? 'border-blue-600 text-blue-900 bg-white rounded-t-xl font-extrabold shadow-2xs'
+              : 'border-transparent text-slate-600 hover:text-slate-900'
+              }`}
           >
             <FileText className="w-4 h-4 text-blue-600" />
             <span>فهرس محتويات المجلد (A4 Index)</span>
@@ -161,11 +160,10 @@ export default function SpineLabelModal({
           <button
             type="button"
             onClick={() => setPrintTemplate('binder-spine')}
-            className={`flex items-center gap-2 px-3.5 py-2.5 border-b-2 cursor-pointer transition-all ${
-              printTemplate === 'binder-spine'
-                ? 'border-blue-600 text-blue-900 bg-white rounded-t-xl font-extrabold shadow-2xs'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
+            className={`flex items-center gap-2 px-3.5 py-2.5 border-b-2 cursor-pointer transition-all ${printTemplate === 'binder-spine'
+              ? 'border-blue-600 text-blue-900 bg-white rounded-t-xl font-extrabold shadow-2xs'
+              : 'border-transparent text-slate-600 hover:text-slate-900'
+              }`}
           >
             <FolderArchive className="w-4 h-4 text-blue-600" />
             <span>ملصق كعب المجلد (Spine Label)</span>
@@ -175,11 +173,10 @@ export default function SpineLabelModal({
           <button
             type="button"
             onClick={() => setPrintTemplate('separator-cover')}
-            className={`flex items-center gap-2 px-3.5 py-2.5 border-b-2 cursor-pointer transition-all ${
-              printTemplate === 'separator-cover'
-                ? 'border-blue-600 text-blue-900 bg-white rounded-t-xl font-extrabold shadow-2xs'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
+            className={`flex items-center gap-2 px-3.5 py-2.5 border-b-2 cursor-pointer transition-all ${printTemplate === 'separator-cover'
+              ? 'border-blue-600 text-blue-900 bg-white rounded-t-xl font-extrabold shadow-2xs'
+              : 'border-transparent text-slate-600 hover:text-slate-900'
+              }`}
           >
             <Layers className="w-4 h-4 text-emerald-600" />
             <span>غلاف الفاصل الكرتوني (Divider Cover A4)</span>
@@ -189,11 +186,10 @@ export default function SpineLabelModal({
           <button
             type="button"
             onClick={() => setPrintTemplate('separator-tab')}
-            className={`flex items-center gap-2 px-3.5 py-2.5 border-b-2 cursor-pointer transition-all ${
-              printTemplate === 'separator-tab'
-                ? 'border-blue-600 text-blue-900 bg-white rounded-t-xl font-extrabold shadow-2xs'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
+            className={`flex items-center gap-2 px-3.5 py-2.5 border-b-2 cursor-pointer transition-all ${printTemplate === 'separator-tab'
+              ? 'border-blue-600 text-blue-900 bg-white rounded-t-xl font-extrabold shadow-2xs'
+              : 'border-transparent text-slate-600 hover:text-slate-900'
+              }`}
           >
             <Scissors className="w-4 h-4 text-amber-600" />
             <span>ملصق لسان التبويب (Tab 3×7cm)</span>
@@ -203,11 +199,10 @@ export default function SpineLabelModal({
           <button
             type="button"
             onClick={() => setPrintTemplate('all-tabs')}
-            className={`flex items-center gap-2 px-3.5 py-2.5 border-b-2 cursor-pointer transition-all ${
-              printTemplate === 'all-tabs'
-                ? 'border-blue-600 text-blue-900 bg-white rounded-t-xl font-extrabold shadow-2xs'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
+            className={`flex items-center gap-2 px-3.5 py-2.5 border-b-2 cursor-pointer transition-all ${printTemplate === 'all-tabs'
+              ? 'border-blue-600 text-blue-900 bg-white rounded-t-xl font-extrabold shadow-2xs'
+              : 'border-transparent text-slate-600 hover:text-slate-900'
+              }`}
           >
             <Sparkles className="w-4 h-4 text-purple-600" />
             <span>ألسنة جميع فواصل المجلد (Sheet)</span>
@@ -229,18 +224,16 @@ export default function SpineLabelModal({
                 <button
                   type="button"
                   onClick={() => setSpineWidth('50mm')}
-                  className={`px-2.5 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
-                    spineWidth === '50mm' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900'
-                  }`}
+                  className={`px-2.5 py-1 rounded text-xs font-bold transition-all cursor-pointer ${spineWidth === '50mm' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900'
+                    }`}
                 >
                   5 سم (قياسي)
                 </button>
                 <button
                   type="button"
                   onClick={() => setSpineWidth('75mm')}
-                  className={`px-2.5 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
-                    spineWidth === '75mm' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900'
-                  }`}
+                  className={`px-2.5 py-1 rounded text-xs font-bold transition-all cursor-pointer ${spineWidth === '75mm' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900'
+                    }`}
                 >
                   7.5 سم (عريض)
                 </button>
@@ -255,8 +248,8 @@ export default function SpineLabelModal({
 
         {/* ================= MAIN PRINTABLE CANVAS AREA ================= */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-200/60 flex justify-center items-start">
-          
-          <div 
+
+          <div
             id="printable-content"
             className="w-full bg-white shadow-md border border-slate-300 rounded-lg p-6 sm:p-8 text-slate-900 relative transition-all"
             style={{ maxWidth: printTemplate === 'binder-spine' ? (spineWidth === '75mm' ? '300px' : '230px') : printTemplate === 'separator-tab' ? '380px' : '820px' }}
@@ -267,13 +260,13 @@ export default function SpineLabelModal({
                 ======================================================== */}
             {printTemplate === 'binder-index' && (
               <div className="space-y-6 text-slate-900 font-cairo">
-                
+
                 {/* Official Corporate Header */}
                 <div className="border-b-2 border-slate-900 pb-4 flex items-start justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2 text-xs font-black tracking-wider text-slate-600 uppercase">
                       <Building2 className="w-4 h-4 text-blue-700 inline" />
-                      <span>المملكة العربية السعودية • شركة المستقبل للأعمال</span>
+                      <span> • شركة المستقبل للأعمال</span>
                     </div>
                     <div className="text-xs text-slate-500 font-semibold mt-0.5">
                       الإدارة العامة للأرشيف والوثائق • وحدة التوثيق والحفظ الميداني
@@ -378,7 +371,7 @@ export default function SpineLabelModal({
                                 {idx + 1}
                               </td>
                               <td className="py-2.5 px-3 text-center border-l border-slate-200">
-                                <span 
+                                <span
                                   className="w-4 h-4 rounded-full inline-block shadow-2xs border border-white"
                                   style={{ backgroundColor: sep.color || '#38bdf8' }}
                                 />
@@ -402,9 +395,8 @@ export default function SpineLabelModal({
                                 {sep.date}
                               </td>
                               <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                  sep.status === 'available' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                                }`}>
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${sep.status === 'available' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                                  }`}>
                                   {sep.status === 'available' ? 'متاح' : 'مستعار'}
                                 </span>
                               </td>
@@ -472,7 +464,7 @@ export default function SpineLabelModal({
                 ======================================================== */}
             {printTemplate === 'binder-spine' && (
               <div className="mx-auto flex flex-col items-center">
-                
+
                 {/* Cutting Guide Instructions */}
                 <div className="text-xs text-slate-500 mb-2 flex items-center gap-1 font-bold no-print">
                   <Scissors className="w-3.5 h-3.5 text-slate-400" />
@@ -480,7 +472,7 @@ export default function SpineLabelModal({
                 </div>
 
                 {/* Physical Spine Label Insert */}
-                <div 
+                <div
                   className="bg-white border-2 border-dashed border-slate-400 p-4 rounded-lg text-slate-900 flex flex-col items-center text-center space-y-4 shadow-sm relative"
                   style={{ width: spineWidth === '75mm' ? '280px' : '210px', minHeight: '520px' }}
                 >
@@ -560,7 +552,7 @@ export default function SpineLabelModal({
                   <div className="w-full pt-2 border-t border-slate-300">
                     <div className="flex items-center justify-center text-xs font-mono text-slate-800 gap-1 font-bold">
                       <Barcode className="w-6 h-4 inline" />
-                      <span>{currentBinder.barcode || `62810010${currentBinder.code?.replace(/\D/g,'') || '101'}`}</span>
+                      <span>{currentBinder.barcode || `62810010${currentBinder.code?.replace(/\D/g, '') || '101'}`}</span>
                     </div>
                   </div>
 
@@ -574,9 +566,9 @@ export default function SpineLabelModal({
                 ======================================================== */}
             {printTemplate === 'separator-cover' && (
               <div className="space-y-6 text-slate-900 font-cairo">
-                
+
                 {/* Physical Color Tab Banner */}
-                <div 
+                <div
                   className="w-full h-3 rounded-t-lg"
                   style={{ backgroundColor: currentSeparator.color || '#38bdf8' }}
                 />
@@ -628,11 +620,11 @@ export default function SpineLabelModal({
 
                 {/* Giant Separator Identity Card */}
                 <div className="p-5 rounded-xl border-2 border-slate-900 bg-white shadow-2xs space-y-4">
-                  
+
                   {/* Code & Color Tag */}
                   <div className="flex items-center justify-between pb-3 border-b border-slate-200">
                     <div className="flex items-center gap-3">
-                      <span 
+                      <span
                         className="w-5 h-5 rounded-full shadow-2xs border-2 border-white"
                         style={{ backgroundColor: currentSeparator.color || '#38bdf8' }}
                       />
@@ -735,17 +727,17 @@ export default function SpineLabelModal({
                 ======================================================== */}
             {printTemplate === 'separator-tab' && (
               <div className="mx-auto flex flex-col items-center">
-                
+
                 <div className="text-xs text-slate-500 mb-2 flex items-center gap-1 font-bold no-print">
                   <Scissors className="w-3.5 h-3.5 text-slate-400" />
                   <span>ملصق مخصص للالتصاق على لسان الفاصل الكرتوني البارز (3 سم × 7 سم):</span>
                 </div>
 
-                <div 
+                <div
                   className="w-80 bg-white border-2 border-dashed border-slate-400 p-3 rounded-lg text-slate-900 flex items-center justify-between gap-3 relative overflow-hidden shadow-sm"
                 >
                   {/* Colored tab edge */}
-                  <div 
+                  <div
                     className="absolute top-0 right-0 bottom-0 w-3"
                     style={{ backgroundColor: currentSeparator.color || '#38bdf8' }}
                   />
@@ -791,7 +783,7 @@ export default function SpineLabelModal({
                 ======================================================== */}
             {printTemplate === 'all-tabs' && (
               <div className="space-y-4 text-slate-900 font-cairo">
-                
+
                 <div className="border-b border-slate-200 pb-3 flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-black text-slate-900">
@@ -809,11 +801,11 @@ export default function SpineLabelModal({
                 {/* 2-Column Grid of Tab Stickers */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   {binderSeparators.map((sep) => (
-                    <div 
+                    <div
                       key={sep.id}
                       className="border-2 border-dashed border-slate-300 p-3 rounded-lg bg-white flex items-center justify-between gap-2.5 relative overflow-hidden"
                     >
-                      <div 
+                      <div
                         className="absolute top-0 right-0 bottom-0 w-2.5"
                         style={{ backgroundColor: sep.color || '#38bdf8' }}
                       />
@@ -865,9 +857,9 @@ export default function SpineLabelModal({
             <span>الورقة المحددة: </span>
             <strong className="text-slate-800">
               {printTemplate === 'binder-index' ? 'فهرس محتويات المجلد الرسمي (A4 Index)' :
-               printTemplate === 'binder-spine' ? `ملصق كعب المجلد (${spineWidth})` :
-               printTemplate === 'separator-cover' ? 'غلاف الفاصل الكرتوني الرسمي (A4 Cover)' :
-               printTemplate === 'separator-tab' ? 'ملصق لسان التبويب (3×7cm)' : 'ورقة ملصقات جميع التبويبات'}
+                printTemplate === 'binder-spine' ? `ملصق كعب المجلد (${spineWidth})` :
+                  printTemplate === 'separator-cover' ? 'غلاف الفاصل الكرتوني الرسمي (A4 Cover)' :
+                    printTemplate === 'separator-tab' ? 'ملصق لسان التبويب (3×7cm)' : 'ورقة ملصقات جميع التبويبات'}
             </strong>
           </div>
 
@@ -879,7 +871,7 @@ export default function SpineLabelModal({
             >
               إلغاء
             </button>
-            
+
             <button
               type="button"
               id="confirm-print-action-btn"

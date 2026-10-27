@@ -24,7 +24,7 @@ export default function AddSeparationModal({
   if (!isOpen) return null;
 
   const [selectedBinderId, setSelectedBinderId] = useState(
-    defaultBinder?.id || binders[0]?.id || 'binder-1'
+    defaultBinder?.id || binders[0]?.id || 'binder-amn-1'
   );
 
   const currentBinder = binders.find(b => b.id === selectedBinderId) || defaultBinder || binders[0];
