@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Plus, QrCode, FileText, CheckCircle2, Clock, Sparkles } from 'lucide-react';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
-import DigitalTwinWidget from './components/DigitalTwinWidget';
 import DocumentsTable from './components/DocumentsTable';
 import ChaptersHierarchyView from './components/ChaptersHierarchyView';
 import AddDocumentModal from './components/AddDocumentModal';
@@ -247,18 +247,77 @@ export default function App() {
             />
           )}
 
-          {/* TAB 2: Dashboard with Physical Location Digital Twin + Recent Documents */}
+          {/* TAB 2: Dashboard with Executive Overview + Recent Documents */}
           {currentTab === 'dashboard' && (
             <div className="space-y-6">
               
-              {/* Physical Location Widget (The "Digital Twin" Panel) */}
-              <DigitalTwinWidget
-                selectedItem={selectedDoc}
-                selectedBinder={selectedBinder}
-                onOpenQRModal={() => handleOpenQRModal(selectedDoc)}
-                onOpenPrintModal={() => handleOpenPrintModal(selectedBinder)}
-                onToggleStatus={handleOpenStatusToggle}
-              />
+              {/* Executive Archive Overview Header */}
+              <div className="bg-white rounded-3xl border border-slate-200/90 shadow-card p-5 lg:p-6 flex flex-col md:flex-row md:items-center justify-between gap-5">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-md bg-brand-50 text-brand-700 border border-brand-200">
+                      شركة المستقبل • قسم الأرشفة والتوثيق
+                    </span>
+                  </div>
+                  <h2 className="text-xl font-black text-slate-900 mt-1 font-cairo">
+                    سجل الوثائق والأرشيف العام
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    إدارة شاملة لجميع الوثائق المودعة في الخزائن والمجلدات مع تتبع حالات الإعارة والاسترداد
+                  </p>
+                </div>
+
+                {/* Quick Action Buttons */}
+                <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDocInitialContext(null);
+                      setIsAddDocModalOpen(true);
+                    }}
+                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md shadow-brand-500/20 transition-all cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>إيداع وثيقة جديدة</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleOpenQRModal(selectedDoc)}
+                    className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+                  >
+                    <QrCode className="w-4 h-4" />
+                    <span>مسح كود المجلد</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Top Metrics Row */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-card">
+                  <div className="text-xs font-semibold text-slate-500">إجمالي الوثائق الورقية</div>
+                  <div className="text-2xl font-black text-slate-900 mt-1 font-cairo">{totalDocs}</div>
+                  <div className="text-[11px] text-brand-600 font-bold mt-1">مودعة في الأرشيف</div>
+                </div>
+
+                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-card">
+                  <div className="text-xs font-semibold text-slate-500">المجلدات الفيزيائية</div>
+                  <div className="text-2xl font-black text-slate-900 mt-1 font-cairo">{binders.length}</div>
+                  <div className="text-[11px] text-slate-500 font-medium mt-1">موزعة على الأرفف</div>
+                </div>
+
+                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-card">
+                  <div className="text-xs font-semibold text-emerald-700">الوثائق المتاحة بالخزائن</div>
+                  <div className="text-2xl font-black text-emerald-700 mt-1 font-cairo">{availableCount}</div>
+                  <div className="text-[11px] text-emerald-600 font-bold mt-1">جاهزة للمطالعة</div>
+                </div>
+
+                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-card">
+                  <div className="text-xs font-semibold text-amber-800">الوثائق المستعارة ميدانياً</div>
+                  <div className="text-2xl font-black text-amber-700 mt-1 font-cairo">{checkedOutCount}</div>
+                  <div className="text-[11px] text-amber-800 font-bold mt-1">قيد المراجعة</div>
+                </div>
+              </div>
 
               {/* Recent Documents Table */}
               <DocumentsTable

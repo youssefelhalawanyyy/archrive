@@ -259,7 +259,7 @@ export default function DocumentsTable({
                         <button
                           type="button"
                           onClick={() => onSelectDoc(doc)}
-                          title="عرض في التوأم الرقمي للموقع"
+                          title="تحديد الوثيقة"
                           className={`p-1.5 rounded-lg transition-colors ${
                             isSelected 
                               ? 'bg-brand-600 text-white' 

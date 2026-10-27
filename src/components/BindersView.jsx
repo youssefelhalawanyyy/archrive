@@ -149,8 +149,8 @@ export default function BindersView({
                   onClick={() => onSelectBinder(binder)}
                   className="flex-1 py-2 px-3 rounded-xl bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <Layers className="w-3.5 h-3.5" />
-                  <span>عرض في التوأم</span>
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>تصفح الوثائق</span>
                 </button>
 
                 <button

@@ -30,10 +30,10 @@ export default function Sidebar({
     },
     {
       id: 'dashboard',
-      label: 'الرئيسية (التوأم الرقمي)',
+      label: 'الرئيسية (سجل الوثائق)',
       icon: LayoutDashboard,
       badge: null,
-      description: 'لوحة التحكم والبحث السريع'
+      description: 'متابعة وبحث كافة الوثائق المادية'
     },
     {
       id: 'binders',

@@ -429,7 +429,7 @@ export default function ChaptersHierarchyView({
                             e.stopPropagation();
                             onSelectDoc(doc);
                           }}
-                          title="عرض في التوأم الرقمي"
+                          title="تحديد الوثيقة وموقعها"
                           className="p-1.5 rounded-lg text-slate-500 hover:text-brand-600 hover:bg-slate-100 transition-colors"
                         >
                           <Eye className="w-4 h-4" />
