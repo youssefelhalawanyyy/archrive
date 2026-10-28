@@ -220,7 +220,7 @@ export default function Sidebar({
                 <div className="w-5 h-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] font-bold shrink-0">
                   {currentUser?.displayName ? currentUser.displayName[0] : (currentUser?.email ? currentUser.email[0].toUpperCase() : 'أ')}
                 </div>
-                <span className="text-[11px] font-bold text-slate-700 truncate max-w-[110px]" title={currentUser?.email || 'admin@archrive.com'}>
+                <span className="text-[11px] font-bold text-slate-700 truncate max-w-[110px]" title={currentUser?.email || 'archive@organization.gov'}>
                   {currentUser?.displayName || (currentUser?.email ? currentUser.email.split('@')[0] : 'أحمد الشريف')}
                 </span>
               </div>

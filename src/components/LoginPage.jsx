@@ -8,7 +8,6 @@ import {
   EyeOff, 
   ShieldCheck, 
   KeyRound, 
-  Sparkles, 
   AlertCircle, 
   CheckCircle2, 
   Loader2, 
@@ -19,8 +18,8 @@ import {
 import { loginWithEmail, sendResetPassword, getIsOnline } from '../services/firebase';
 
 export default function LoginPage({ onLoginSuccess }) {
-  const [email, setEmail] = useState('admin@archrive.com');
-  const [password, setPassword] = useState('admin123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,12 +51,6 @@ export default function LoginPage({ onLoginSuccess }) {
     } else {
       setCapsLockActive(false);
     }
-  };
-
-  const handleFillMasterAccount = () => {
-    setEmail('admin@archrive.com');
-    setPassword('admin123456');
-    setErrorMessage('');
   };
 
   const handleSubmit = async (e) => {
@@ -186,38 +179,6 @@ export default function LoginPage({ onLoginSuccess }) {
               </div>
             )}
 
-            {/* Master Account Quick Fill Banner */}
-            <div className="mb-5 p-3 rounded-2xl bg-blue-950/40 border border-blue-800/60 text-xs text-blue-200">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="font-bold flex items-center gap-1 text-blue-300">
-                  <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-                  الحساب الرئيسي المعتمد (Firebase Admin):
-                </span>
-                <span className="text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-full font-mono">
-                  رئيسي
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-[11px] text-slate-300 font-mono bg-slate-950/60 p-2 rounded-xl border border-slate-800 mb-2">
-                <div>
-                  <span className="text-slate-500 ml-1">البريد:</span>
-                  <span className="text-white font-semibold">admin@archrive.com</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 ml-1">السرية:</span>
-                  <span className="text-emerald-400 font-semibold">admin123456</span>
-                </div>
-              </div>
-              <button
-                type="button"
-                id="quick-fill-admin-btn"
-                onClick={handleFillMasterAccount}
-                className="w-full py-1.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-bold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-blue-900/40"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                تعبئة بيانات الحساب الرئيسي تلقائياً
-              </button>
-            </div>
-
             {/* Error Notification */}
             {errorMessage && (
               <div className="mb-5 p-3.5 rounded-xl bg-rose-950/50 border border-rose-800 text-rose-200 text-xs flex items-start gap-2.5 animate-in fade-in slide-in-from-top-1">
@@ -252,8 +213,9 @@ export default function LoginPage({ onLoginSuccess }) {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    autoComplete="username"
                     dir="ltr"
-                    placeholder="admin@archrive.com"
+                    placeholder="name@organization.com"
                     className="w-full pr-10 pl-3.5 py-2.5 bg-slate-950/80 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 text-xs sm:text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all font-mono"
                   />
                 </div>
@@ -288,8 +250,9 @@ export default function LoginPage({ onLoginSuccess }) {
                     onKeyDown={handleKeyDown}
                     onKeyUp={handleKeyDown}
                     required
+                    autoComplete="current-password"
                     dir="ltr"
-                    placeholder="••••••••"
+                    placeholder="••••••••••••"
                     className="w-full pr-10 pl-10 py-2.5 bg-slate-950/80 border border-slate-700/80 rounded-xl text-white placeholder-slate-500 text-xs sm:text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all font-mono"
                   />
                   <button
@@ -402,7 +365,7 @@ export default function LoginPage({ onLoginSuccess }) {
                   onChange={(e) => setResetEmail(e.target.value)}
                   required
                   dir="ltr"
-                  placeholder="admin@archrive.com"
+                  placeholder="name@organization.com"
                   className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs font-mono focus:border-blue-500 outline-none"
                 />
               </div>

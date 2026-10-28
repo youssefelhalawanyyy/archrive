@@ -274,7 +274,7 @@ export default function Navbar({
                     {currentUser?.displayName || 'Admin'}
                   </p>
                   <p className="text-[10px] text-blue-600 font-semibold font-mono truncate">
-                    {currentUser?.email || 'admin@archrive.com'}
+                    {currentUser?.email || 'archive@organization.gov'}
                   </p>
                 </div>
                 <div className="py-1 text-xs text-slate-600">
