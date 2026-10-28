@@ -2,13 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   X, 
   FolderPlus, 
-  MapPin, 
-  Layers, 
-  Sparkles, 
-  Barcode, 
-  CheckCircle2, 
-  FolderKanban,
-  FilePlus2
+  Sparkles 
 } from 'lucide-react';
 import { generateNextBinderCode } from '../services/firebase';
 
@@ -26,11 +20,7 @@ export default function AddBinderModal({
   );
   const [name, setName] = useState('');
   const [autoCode, setAutoCode] = useState('');
-  const [cabinet, setCabinet] = useState('الخزانة الرئيسية');
-  const [shelf, setShelf] = useState('رف 1');
-  const [totalCapacity, setTotalCapacity] = useState(10);
   const [description, setDescription] = useState('');
-  const [separationsCount, setSeparationsCount] = useState(4); // Default 4 quarters or tabs
 
   const currentChapter = chapters.find(c => c.id === selectedChapterId) || chapters[0];
 
@@ -49,32 +39,18 @@ export default function AddBinderModal({
       return;
     }
 
-    // Auto generate initial separations
-    const initialSeps = [];
-    for (let i = 1; i <= separationsCount; i++) {
-      const padNum = i.toString().padStart(2, '0');
-      initialSeps.push({
-        id: `sep-${Date.now()}-${i}`,
-        number: i,
-        code: `${autoCode}-S${padNum}`,
-        name: `فاصل ${i} (قسم ${String.fromCharCode(64 + i)})`,
-        color: ['#38bdf8', '#34d399', '#fbbf24', '#f87171', '#a855f7', '#ec4899'][(i - 1) % 6],
-        docsCount: 0
-      });
-    }
-
     onAddBinder({
       chapterId: currentChapter.id,
       chapterName: currentChapter.name,
       chapterCode: currentChapter.code,
       name: name.trim(),
       code: autoCode,
-      cabinet: cabinet,
-      shelf: shelf,
-      totalCapacity: parseInt(totalCapacity) || 10,
+      cabinet: 'الخزانة الرئيسية',
+      shelf: 'رف 1',
+      totalCapacity: 20,
       description: description.trim() || `مجلد فيزيائي تابع لباب ${currentChapter.name}`,
       color: currentChapter.color || '#0284c7',
-      separations: initialSeps
+      separations: []
     });
 
     onClose();
@@ -157,72 +133,7 @@ export default function AddBinderModal({
             />
           </div>
 
-          {/* Physical Location: Cabinet & Shelf */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-brand-600" />
-                الخزانة الفيزيائية
-              </label>
-              <select
-                value={cabinet}
-                onChange={(e) => setCabinet(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-bold transition-all"
-              >
-                <option value="الخزانة الرئيسية">الخزانة الرئيسية (غرفة الأرشيف 102)</option>
-              </select>
-            </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                الرف داخل الخزانة
-              </label>
-              <select
-                value={shelf}
-                onChange={(e) => setShelf(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-bold transition-all"
-              >
-                <option value="رف 1">رف 1</option>
-                <option value="رف 2">رف 2</option>
-                <option value="رف 3">رف 3</option>
-                <option value="رف 4">رف 4</option>
-                <option value="رف 5">رف 5</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Capacity & Initial Separations */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                السعة القصوى (عدد الفواصل)
-              </label>
-              <input
-                type="number"
-                min="2"
-                max="30"
-                value={totalCapacity}
-                onChange={(e) => setTotalCapacity(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold text-left font-mono"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                عدد الفواصل الداخلية الأولية
-              </label>
-              <select
-                value={separationsCount}
-                onChange={(e) => setSeparationsCount(parseInt(e.target.value))}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold"
-              >
-                <option value={2}>2 فواصل (نصف سنوي)</option>
-                <option value={4}>4 فواصل (أرباع سنوية Q1-Q4)</option>
-                <option value={6}>6 فواصل (شهري أو أقسام)</option>
-                <option value={10}>10 فواصل كرتونية</option>
-              </select>
-            </div>
-          </div>
 
           {/* Description */}
           <div>
@@ -252,7 +163,7 @@ export default function AddBinderModal({
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold shadow-md shadow-brand-600/20 transition-all cursor-pointer"
             >
               <FolderPlus className="w-4 h-4" />
-              <span>إنشاء المجلد وتجهيز الفواصل</span>
+              <span>إنشاء المجلد</span>
             </button>
           </div>
 
