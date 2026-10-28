@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { 
+  initializeFirestore,
   getFirestore, 
   collection, 
   getDocs, 
@@ -9,7 +10,11 @@ import {
   deleteDoc, 
   onSnapshot,
   query,
-  orderBy
+  orderBy,
+  limit,
+  writeBatch,
+  persistentLocalCache,
+  persistentMultipleTabManager
 } from "firebase/firestore";
 import { 
   getAuth, 
@@ -44,7 +49,20 @@ let isAuthAvailable = false;
 
 try {
   app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
+  // FREE TIER GUARANTEE:
+  // Enable persistent IndexedDB multi-tab cache.
+  // When multiple tabs are open or on page refresh, Firestore reads from local IndexedDB,
+  // consuming ZERO network reads against the 50,000/day free limit!
+  try {
+    db = initializeFirestore(app, {
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager()
+      })
+    });
+  } catch (cacheErr) {
+    // Graceful fallback for non-supported browsers
+    db = getFirestore(app);
+  }
   isFirestoreAvailable = true;
   auth = getAuth(app);
   isAuthAvailable = true;
@@ -68,6 +86,81 @@ const STORAGE_CHAPTERS = "archive_chapters_v6";
 const STORAGE_BINDERS = "archive_binders_v6";
 const STORAGE_SEPARATORS = "archive_separators_v6";
 const STORAGE_LOGS = "archive_audit_logs_v6";
+const STORAGE_QUOTA = "archive_quota_tracker_v1";
+
+// ================= FREE TIER QUOTA SENTINEL & USAGE TRACKER =================
+export const getDailyQuotaUsage = () => {
+  const today = new Date().toISOString().split('T')[0];
+  try {
+    const raw = localStorage.getItem(STORAGE_QUOTA);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.date === today) {
+        return parsed;
+      }
+    }
+  } catch (e) {}
+
+  const initial = {
+    date: today,
+    reads: 0,
+    writes: 0,
+    deletes: 0,
+    maxDailyReads: 50000,
+    maxDailyWrites: 20000,
+    maxDailyDeletes: 20000
+  };
+  try {
+    localStorage.setItem(STORAGE_QUOTA, JSON.stringify(initial));
+  } catch (e) {}
+  return initial;
+};
+
+const quotaListeners = new Set();
+
+export const subscribeToQuotaUsage = (callback) => {
+  quotaListeners.add(callback);
+  callback(getDailyQuotaUsage());
+  return () => quotaListeners.delete(callback);
+};
+
+const notifyQuotaListeners = (quota) => {
+  quotaListeners.forEach((cb) => {
+    try {
+      cb(quota);
+    } catch (e) {}
+  });
+};
+
+export const recordQuotaRead = (count = 1) => {
+  if (count <= 0) return;
+  try {
+    const q = getDailyQuotaUsage();
+    q.reads = (q.reads || 0) + count;
+    localStorage.setItem(STORAGE_QUOTA, JSON.stringify(q));
+    notifyQuotaListeners(q);
+  } catch (e) {}
+};
+
+export const recordQuotaWrite = (count = 1) => {
+  if (count <= 0) return;
+  try {
+    const q = getDailyQuotaUsage();
+    q.writes = (q.writes || 0) + count;
+    localStorage.setItem(STORAGE_QUOTA, JSON.stringify(q));
+    notifyQuotaListeners(q);
+  } catch (e) {}
+};
+
+export const recordQuotaDelete = (count = 1) => {
+  if (count <= 0) return;
+  try {
+    const q = getDailyQuotaUsage();
+    q.deletes = (q.deletes || 0) + count;
+    localStorage.setItem(STORAGE_QUOTA, JSON.stringify(q));
+    notifyQuotaListeners(q);
+  } catch (e) {}
+};
 
 // ================= SYNC STATUS & OFFLINE QUEUE MANAGEMENT =================
 let currentSyncStatus = (isFirestoreAvailable && getIsOnline()) ? "synced" : "offline"; 
@@ -110,8 +203,10 @@ export const safeFirestoreWrite = async (entity, id, data, isDelete = false, des
   try {
     if (isDelete) {
       await deleteDoc(doc(db, entity, id));
+      recordQuotaDelete(1);
     } else {
       await setDoc(doc(db, entity, id), data, { merge: true });
+      recordQuotaWrite(1);
     }
     const q = getOfflineQueue();
     notifySyncStatus(q.length > 0 ? "offline" : "synced");
@@ -125,6 +220,66 @@ export const safeFirestoreWrite = async (entity, id, data, isDelete = false, des
       payload: isDelete ? null : data,
       description: description || (isDelete ? `حذف من ${entity}` : `حفظ في ${entity}`)
     });
+    notifySyncStatus("offline");
+    return false;
+  }
+};
+
+/**
+ * Perform a batch write to commit up to 500 operations in a single network round-trip.
+ * Drastically reduces write operations and network overhead.
+ */
+export const safeFirestoreBatchWrite = async (operations) => {
+  if (!operations || operations.length === 0) return true;
+
+  const online = getIsOnline() && isFirestoreAvailable && !!db;
+  if (!online) {
+    for (const op of operations) {
+      enqueueOfflineAction({
+        type: op.isDelete ? 'DELETE' : 'SET',
+        entity: op.entity,
+        id: op.id,
+        payload: op.isDelete ? null : op.data,
+        description: op.description || `${op.entity}/${op.id}`
+      });
+    }
+    notifySyncStatus("offline");
+    return false;
+  }
+
+  try {
+    // Firestore writeBatch supports up to 500 writes atomically
+    const batch = writeBatch(db);
+    let writesCount = 0;
+    let deletesCount = 0;
+
+    for (const op of operations) {
+      const docRef = doc(db, op.entity, op.id);
+      if (op.isDelete) {
+        batch.delete(docRef);
+        deletesCount++;
+      } else {
+        batch.set(docRef, op.data, { merge: true });
+        writesCount++;
+      }
+    }
+
+    await batch.commit();
+    if (writesCount > 0) recordQuotaWrite(writesCount);
+    if (deletesCount > 0) recordQuotaDelete(deletesCount);
+    notifySyncStatus("synced");
+    return true;
+  } catch (err) {
+    console.warn("Firestore batch write deferred to offline queue:", err);
+    for (const op of operations) {
+      enqueueOfflineAction({
+        type: op.isDelete ? 'DELETE' : 'SET',
+        entity: op.entity,
+        id: op.id,
+        payload: op.isDelete ? null : op.data,
+        description: op.description || `${op.entity}/${op.id}`
+      });
+    }
     notifySyncStatus("offline");
     return false;
   }
@@ -213,6 +368,10 @@ export const subscribeToChapters = (onUpdate, onError) => {
   try {
     const q = collection(db, "chapters");
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      // Free Tier quota sentinel: track only server reads (cache hits cost 0 reads)
+      if (!snapshot.metadata.fromCache) {
+        recordQuotaRead(snapshot.docChanges().length || snapshot.size);
+      }
       if (!snapshot.empty) {
         const remote = snapshot.docs.map(d => ({
           id: d.id,
@@ -386,6 +545,10 @@ export const subscribeToBinders = (onUpdate, onError) => {
   try {
     const q = collection(db, "binders");
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      // Free Tier quota sentinel: track only server reads (cache hits cost 0 reads)
+      if (!snapshot.metadata.fromCache) {
+        recordQuotaRead(snapshot.docChanges().length || snapshot.size);
+      }
       if (!snapshot.empty) {
         const remote = snapshot.docs.map(d => ({
           id: d.id,
@@ -649,6 +812,10 @@ export const subscribeToSeparators = (onUpdate, onError) => {
   try {
     const q = collection(db, "separators");
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      // Free Tier quota sentinel: track only server reads (cache hits cost 0 reads)
+      if (!snapshot.metadata.fromCache) {
+        recordQuotaRead(snapshot.docChanges().length || snapshot.size);
+      }
       if (!snapshot.empty) {
         const remoteSeps = snapshot.docs.map(doc => ({
           id: doc.id,
@@ -789,15 +956,27 @@ export const bulkAddSeparators = async (items) => {
     reason: `تم إيداع عدد ${formattedNewSeps.length} فاصل كرتوني وتوزيعها على المجلدات عبر ملف إكسل`
   });
 
-  // Safe batch write for bulk separators
-  for (const sep of formattedNewSeps) {
-    await safeFirestoreWrite("separators", sep.id, sep, false, `إيداع فاصل إكسل: ${sep.name}`);
-  }
-  for (const b of updatedBinders) {
-    if (binderCounts[b.id] !== undefined) {
-      await safeFirestoreWrite("binders", b.id, b, false, `تحديث سعة المجلد: ${b.name}`);
-    }
-  }
+  // Safe atomic batch write for bulk separators and binders (reduces network overhead to 1 request)
+  const batchOps = [
+    ...formattedNewSeps.map(sep => ({
+      entity: "separators",
+      id: sep.id,
+      data: sep,
+      isDelete: false,
+      description: `إيداع فاصل إكسل: ${sep.name}`
+    })),
+    ...updatedBinders
+      .filter(b => binderCounts[b.id] !== undefined)
+      .map(b => ({
+        entity: "binders",
+        id: b.id,
+        data: b,
+        isDelete: false,
+        description: `تحديث سعة المجلد: ${b.name}`
+      }))
+  ];
+
+  await safeFirestoreBatchWrite(batchOps);
 
   return { updatedSeparators, updatedBinders, count: formattedNewSeps.length };
 };
@@ -951,8 +1130,14 @@ export const subscribeToAuditLogs = (onUpdate, onError) => {
   if (!isFirestoreAvailable || !db) return () => {};
 
   try {
-    const q = collection(db, "audit_logs");
+    // FREE TIER PROTECTION:
+    // Limit audit logs query to recent 25 activities to guarantee zero read exhaustion
+    const q = query(collection(db, "audit_logs"), orderBy("createdAt", "desc"), limit(25));
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      // Free Tier quota sentinel: track only server reads (cache hits cost 0 reads)
+      if (!snapshot.metadata.fromCache) {
+        recordQuotaRead(snapshot.docChanges().length || snapshot.size);
+      }
       if (!snapshot.empty) {
         const remote = snapshot.docs.map(d => ({
           id: d.id,

@@ -173,8 +173,11 @@ export default function App() {
     }
   }, []);
 
-  // Initialize live 2-way subscriptions to Firebase
+  // Initialize live 2-way subscriptions to Firebase (Protected by Authentication Guard)
   useEffect(() => {
+    // Free Tier Quota Guard: Never open Firestore listeners when unauthenticated
+    if (!currentUser) return;
+
     // 1. Chapters subscription
     const unsubChapters = subscribeToChapters((chaps) => {
       setChapters(chaps);
@@ -207,7 +210,7 @@ export default function App() {
       if (typeof unsubLogs === 'function') unsubLogs();
       if (typeof unsubSync === 'function') unsubSync();
     };
-  }, []);
+  }, [currentUser]);
 
   // Status Toggle for a Separator
   const handleOpenStatusToggle = (item) => {
