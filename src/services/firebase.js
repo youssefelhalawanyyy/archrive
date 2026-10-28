@@ -87,6 +87,38 @@ const STORAGE_BINDERS = "archive_binders_v7";
 const STORAGE_SEPARATORS = "archive_separators_v7";
 const STORAGE_LOGS = "archive_audit_logs_v7";
 const STORAGE_QUOTA = "archive_quota_tracker_v1";
+const STORAGE_DELETED_IDS = "archive_deleted_ids_v1";
+
+export const getDeletedIds = () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_DELETED_IDS);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch (e) {
+    return new Set();
+  }
+};
+
+export const markIdAsDeleted = (ids) => {
+  const current = getDeletedIds();
+  const idList = Array.isArray(ids) ? ids : [ids];
+  idList.forEach(id => {
+    if (id) current.add(id);
+  });
+  try {
+    localStorage.setItem(STORAGE_DELETED_IDS, JSON.stringify(Array.from(current)));
+  } catch (e) {}
+};
+
+export const unmarkIdAsDeleted = (ids) => {
+  const current = getDeletedIds();
+  const idList = Array.isArray(ids) ? ids : [ids];
+  idList.forEach(id => {
+    if (id) current.delete(id);
+  });
+  try {
+    localStorage.setItem(STORAGE_DELETED_IDS, JSON.stringify(Array.from(current)));
+  } catch (e) {}
+};
 
 // ================= FREE TIER QUOTA SENTINEL & USAGE TRACKER =================
 export const getDailyQuotaUsage = () => {
@@ -368,25 +400,35 @@ export const syncMasterDataToFirestore = async () => {
 };
 
 const getLocal = (key, fallback) => {
+  const deleted = getDeletedIds();
   try {
     const val = localStorage.getItem(key);
     if (!val) {
-      localStorage.setItem(key, JSON.stringify(fallback));
-      return fallback;
+      const filteredFallback = Array.isArray(fallback) 
+        ? fallback.filter(item => !deleted.has(item.id))
+        : fallback;
+      localStorage.setItem(key, JSON.stringify(filteredFallback));
+      return filteredFallback;
     }
     const parsed = JSON.parse(val);
-    // If local cache has less items than master fallback, upgrade automatically
-    if (Array.isArray(parsed) && Array.isArray(fallback) && parsed.length < fallback.length) {
-      const mergedMap = new Map();
-      fallback.forEach(item => mergedMap.set(item.id, item));
-      parsed.forEach(item => mergedMap.set(item.id, item));
-      const full = Array.from(mergedMap.values());
-      localStorage.setItem(key, JSON.stringify(full));
-      return full;
+    if (Array.isArray(parsed)) {
+      const activeParsed = parsed.filter(item => !deleted.has(item.id));
+      if (Array.isArray(fallback)) {
+        const activeFallback = fallback.filter(item => !deleted.has(item.id));
+        if (activeParsed.length < activeFallback.length) {
+          const mergedMap = new Map();
+          activeFallback.forEach(item => mergedMap.set(item.id, item));
+          activeParsed.forEach(item => mergedMap.set(item.id, item));
+          const full = Array.from(mergedMap.values());
+          localStorage.setItem(key, JSON.stringify(full));
+          return full;
+        }
+      }
+      return activeParsed;
     }
     return parsed;
   } catch (e) {
-    return fallback;
+    return Array.isArray(fallback) ? fallback.filter(item => !deleted.has(item.id)) : fallback;
   }
 };
 
@@ -415,20 +457,20 @@ export const subscribeToChapters = (onUpdate, onError) => {
       if (!snapshot.metadata.fromCache) {
         recordQuotaRead(snapshot.docChanges().length || snapshot.size);
       }
-      if (!snapshot.empty) {
-        const remote = snapshot.docs.map(d => ({
-          id: d.id,
-          ...d.data()
-        }));
-        const mergedMap = new Map();
-        initialChapters.forEach(c => mergedMap.set(c.id, c));
-        remote.forEach(c => mergedMap.set(c.id, c));
-        const fullChapters = Array.from(mergedMap.values());
+      const deleted = getDeletedIds();
+      const remote = snapshot.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(c => !deleted.has(c.id));
 
-        setLocal(STORAGE_CHAPTERS, fullChapters);
-        onUpdate(fullChapters);
-        notifySyncStatus("synced");
+      if (remote.length > 0 || !snapshot.empty) {
+        setLocal(STORAGE_CHAPTERS, remote);
+        onUpdate(remote);
+      } else {
+        const fallback = initialChapters.filter(c => !deleted.has(c.id));
+        setLocal(STORAGE_CHAPTERS, fallback);
+        onUpdate(fallback);
       }
+      notifySyncStatus("synced");
     }, (error) => {
       console.warn("Chapters snapshot warning:", error);
       if (onError) onError(error);
@@ -445,6 +487,8 @@ export const addChapter = async (newChapter) => {
   const code = (newChapter.code || newChapter.name.slice(0, 3)).toUpperCase().trim();
   const chapterId = newChapter.id || `ch-${code.toLowerCase()}-${Date.now()}`;
   
+  unmarkIdAsDeleted(chapterId);
+
   const item = {
     ...newChapter,
     id: chapterId,
@@ -541,39 +585,58 @@ export const deleteChapter = async (id) => {
   const target = chapters.find(c => c.id === id);
   if (!target) return chapters;
 
+  // Mark chapter ID as permanently deleted
+  markIdAsDeleted(id);
+
   const filteredChapters = chapters.filter(c => c.id !== id);
   setLocal(STORAGE_CHAPTERS, filteredChapters);
 
   // Find child binders and child separators to cascade delete
   const binders = getBinders();
-  const childBinders = binders.filter(b => b.chapterId === id || b.chapterCode === target.code);
-  const remainingBinders = binders.filter(b => b.chapterId !== id && b.chapterCode !== target.code);
+  const childBinders = binders.filter(b => b.chapterId === id || (target.code && b.chapterCode === target.code));
+  const remainingBinders = binders.filter(b => b.chapterId !== id && (!target.code || b.chapterCode !== target.code));
   setLocal(STORAGE_BINDERS, remainingBinders);
 
   const childBinderIds = new Set(childBinders.map(b => b.id));
+  markIdAsDeleted(Array.from(childBinderIds));
+
   const seps = getSeparators();
-  const childSeps = seps.filter(s => s.chapterId === id || childBinderIds.has(s.binderId));
-  const remainingSeps = seps.filter(s => s.chapterId !== id && !childBinderIds.has(s.binderId));
+  const childSeps = seps.filter(s => 
+    s.chapterId === id || 
+    (target.code && s.chapterCode === target.code) || 
+    childBinderIds.has(s.binderId)
+  );
+  const remainingSeps = seps.filter(s => 
+    s.chapterId !== id && 
+    (!target.code || s.chapterCode !== target.code) && 
+    !childBinderIds.has(s.binderId)
+  );
   setLocal(STORAGE_SEPARATORS, remainingSeps);
 
-  // Safe delete chapter & children
-  await safeFirestoreWrite("chapters", id, null, true, `حذف موضوع: ${target.name}`);
-  for (const b of childBinders) {
-    await safeFirestoreWrite("binders", b.id, null, true, `حذف مجلد تابع: ${b.name}`);
-  }
-  for (const s of childSeps) {
-    await safeFirestoreWrite("separators", s.id, null, true, `حذف فاصل تابع: ${s.name}`);
-  }
+  markIdAsDeleted(childSeps.map(s => s.id));
+
+  // Prepare atomic batch delete for Firestore
+  const batchOps = [
+    { entity: "chapters", id, isDelete: true, description: `حذف موضوع: ${target.name}` }
+  ];
+  childBinders.forEach(b => {
+    batchOps.push({ entity: "binders", id: b.id, isDelete: true, description: `حذف مجلد تابع: ${b.name}` });
+  });
+  childSeps.forEach(s => {
+    batchOps.push({ entity: "separators", id: s.id, isDelete: true, description: `حذف فاصل تابع: ${s.name}` });
+  });
+
+  await safeFirestoreBatchWrite(batchOps);
 
   await addAuditLog({
     docId: id,
     docTitle: `موضوع: ${target.name} (${target.code})`,
     action: "delete",
     actionName: "حذف موضوع كامل ومجلداته",
-    performedBy: "أحمد",
+    performedBy: "أمين الأرشيف",
     borrower: null,
     date: new Date().toISOString().replace('T', ' ').substring(0, 16),
-    reason: `تم حذف الموضوع (${target.name}) مع عدد ${childBinders.length} مجلدات و ${childSeps.length} فواصل`
+    reason: `تم حذف الموضوع (${target.name}) مع عدد ${childBinders.length} مجلدات و ${childSeps.length} فواصل نهائياً من النظام و Firebase`
   });
 
   return filteredChapters;
@@ -597,20 +660,20 @@ export const subscribeToBinders = (onUpdate, onError) => {
       if (!snapshot.metadata.fromCache) {
         recordQuotaRead(snapshot.docChanges().length || snapshot.size);
       }
-      if (!snapshot.empty) {
-        const remote = snapshot.docs.map(d => ({
-          id: d.id,
-          ...d.data()
-        }));
-        const mergedMap = new Map();
-        initialBinders.forEach(b => mergedMap.set(b.id, b));
-        remote.forEach(b => mergedMap.set(b.id, b));
-        const fullBinders = Array.from(mergedMap.values());
+      const deleted = getDeletedIds();
+      const remote = snapshot.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(b => !deleted.has(b.id));
 
-        setLocal(STORAGE_BINDERS, fullBinders);
-        onUpdate(fullBinders);
-        notifySyncStatus("synced");
+      if (remote.length > 0 || !snapshot.empty) {
+        setLocal(STORAGE_BINDERS, remote);
+        onUpdate(remote);
+      } else {
+        const fallback = initialBinders.filter(b => !deleted.has(b.id));
+        setLocal(STORAGE_BINDERS, fallback);
+        onUpdate(fallback);
       }
+      notifySyncStatus("synced");
     }, (error) => {
       console.warn("Binders snapshot warning:", error);
       if (onError) onError(error);
@@ -636,6 +699,8 @@ export const addBinder = async (newBinder) => {
   notifySyncStatus("saving");
   const binders = getBinders();
   const binderId = newBinder.id || `binder-${Date.now()}`;
+  
+  unmarkIdAsDeleted(binderId);
   
   let code = newBinder.code;
   let number = newBinder.number;
@@ -801,14 +866,18 @@ export const deleteBinder = async (id) => {
   const target = binders.find(b => b.id === id);
   if (!target) return binders;
 
+  markIdAsDeleted(id);
+
   const filteredBinders = binders.filter(b => b.id !== id);
   setLocal(STORAGE_BINDERS, filteredBinders);
 
   // Cascade delete all separators inside this binder
   const seps = getSeparators();
-  const childSeps = seps.filter(s => s.binderId === id);
-  const remainingSeps = seps.filter(s => s.binderId !== id);
+  const childSeps = seps.filter(s => s.binderId === id || (target.code && s.binderCode === target.code));
+  const remainingSeps = seps.filter(s => s.binderId !== id && (!target.code || s.binderCode !== target.code));
   setLocal(STORAGE_SEPARATORS, remainingSeps);
+
+  markIdAsDeleted(childSeps.map(s => s.id));
 
   // Decrement chapter's bindersCount
   if (target.chapterId) {
@@ -821,20 +890,25 @@ export const deleteBinder = async (id) => {
     if (cTarget) await safeFirestoreWrite("chapters", target.chapterId, cTarget, false, `تحديث سعة موضوع`);
   }
 
-  await safeFirestoreWrite("binders", id, null, true, `حذف مجلد: ${target.name}`);
-  for (const s of childSeps) {
-    await safeFirestoreWrite("separators", s.id, null, true, `حذف فاصل تابع: ${s.name}`);
-  }
+  // Atomically delete binder and all child separators in Firestore
+  const batchOps = [
+    { entity: "binders", id, isDelete: true, description: `حذف مجلد: ${target.name}` }
+  ];
+  childSeps.forEach(s => {
+    batchOps.push({ entity: "separators", id: s.id, isDelete: true, description: `حذف فاصل تابع: ${s.name}` });
+  });
+
+  await safeFirestoreBatchWrite(batchOps);
 
   await addAuditLog({
     docId: id,
     docTitle: `مجلد: ${target.name} (${target.code})`,
     action: "delete",
     actionName: "حذف مجلد فيزيائي وفواصله",
-    performedBy: "أحمد",
+    performedBy: "أمين الأرشيف",
     borrower: null,
     date: new Date().toISOString().replace('T', ' ').substring(0, 16),
-    reason: `تم حذف المجلد (${target.name}) مع عدد ${childSeps.length} فواصل تابعة له`
+    reason: `تم حذف المجلد (${target.name}) مع عدد ${childSeps.length} فواصل تابعة له نهائياً من النظام و Firebase`
   });
 
   return filteredBinders;
@@ -869,27 +943,26 @@ export const subscribeToSeparators = (onUpdate, onError) => {
       if (!snapshot.metadata.fromCache) {
         recordQuotaRead(snapshot.docChanges().length || snapshot.size);
       }
-      if (!snapshot.empty) {
-        const remoteSeps = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        const mergedMap = new Map();
-        initialSeparators.forEach(s => mergedMap.set(s.id, s));
-        remoteSeps.forEach(s => mergedMap.set(s.id, s));
-        const fullSeps = Array.from(mergedMap.values());
+      const deleted = getDeletedIds();
+      const remoteSeps = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(s => !deleted.has(s.id));
 
-        setLocal(STORAGE_SEPARATORS, fullSeps);
-        onUpdate(fullSeps);
-        notifySyncStatus("synced");
+      if (remoteSeps.length > 0 || !snapshot.empty) {
+        setLocal(STORAGE_SEPARATORS, remoteSeps);
+        onUpdate(remoteSeps);
+      } else {
+        const fallback = initialSeparators.filter(s => !deleted.has(s.id));
+        setLocal(STORAGE_SEPARATORS, fallback);
+        onUpdate(fallback);
       }
+      notifySyncStatus("synced");
     }, (error) => {
       console.warn("Separators snapshot warning:", error);
       if (onError) onError(error);
     });
-
     return unsubscribe;
-  } catch (err) {
+  } catch (e) {
     return () => {};
   }
 };
@@ -897,6 +970,7 @@ export const subscribeToSeparators = (onUpdate, onError) => {
 export const addSeparator = async (newSeparator) => {
   notifySyncStatus("saving");
   const sepId = newSeparator.id || `sep-${Date.now()}`;
+  unmarkIdAsDeleted(sepId);
   const fullSep = {
     ...newSeparator,
     id: sepId,
@@ -1156,6 +1230,8 @@ export const deleteSeparator = async (id) => {
   notifySyncStatus("saving");
   const seps = getSeparators();
   const target = seps.find(s => s.id === id);
+  markIdAsDeleted(id);
+
   const filtered = seps.filter(s => s.id !== id);
   setLocal(STORAGE_SEPARATORS, filtered);
 
@@ -1172,7 +1248,19 @@ export const deleteSeparator = async (id) => {
     }
   }
 
-  await safeFirestoreWrite("separators", id, null, true, `حذف فاصل كرتوني: ${target?.name}`);
+  await safeFirestoreWrite("separators", id, null, true, `حذف فاصل كرتوني: ${target?.name || id}`);
+
+  await addAuditLog({
+    docId: id,
+    docTitle: `فاصل: ${target?.name || id} (${target?.code || ''})`,
+    action: "delete",
+    actionName: "حذف فاصل كرتوني",
+    performedBy: "أمين الأرشيف",
+    borrower: null,
+    date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+    reason: `تم حذف الفاصل (${target?.name || id}) نهائياً من النظام و Firebase`
+  });
+
   return filtered;
 };
 

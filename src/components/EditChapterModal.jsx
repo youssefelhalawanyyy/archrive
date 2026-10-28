@@ -6,14 +6,16 @@ import {
   Save, 
   Building2, 
   Check,
-  AlertCircle
+  AlertCircle,
+  Trash2
 } from 'lucide-react';
 
 export default function EditChapterModal({
   isOpen,
   onClose,
   chapter,
-  onUpdateChapter
+  onUpdateChapter,
+  onDeleteChapter
 }) {
   if (!isOpen || !chapter) return null;
 
@@ -177,21 +179,36 @@ export default function EditChapterModal({
           </div>
 
           {/* Action Buttons */}
-          <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2.5">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-colors cursor-pointer"
-            >
-              إلغاء
-            </button>
-            <button
-              type="submit"
-              className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 active:scale-95 text-white text-xs font-black shadow-md transition-all cursor-pointer"
-            >
-              <Save className="w-4 h-4" />
-              <span>حفظ التعديلات</span>
-            </button>
+          <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
+            {onDeleteChapter && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onDeleteChapter(chapter);
+                }}
+                className="flex items-center gap-1.5 px-3 py-2 text-red-600 hover:bg-red-50 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>حذف هذا الموضوع...</span>
+              </button>
+            )}
+            <div className="flex items-center gap-2.5 mr-auto">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                إلغاء
+              </button>
+              <button
+                type="submit"
+                className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 active:scale-95 text-white text-xs font-black shadow-md transition-all cursor-pointer"
+              >
+                <Save className="w-4 h-4" />
+                <span>حفظ التعديلات</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>

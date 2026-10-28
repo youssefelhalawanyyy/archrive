@@ -318,23 +318,28 @@ export default function App() {
 
   // Generic Confirm Delete Callback
   const handleConfirmDelete = async (id) => {
-    if (deleteModalState.type === 'chapter') {
-      const updated = await deleteChapter(id);
-      setChapters(updated);
-      setBinders(getBinders());
-      setSeparators(getSeparators());
-      setAuditLogs(getAuditLogs());
-    } else if (deleteModalState.type === 'binder') {
-      const updated = await deleteBinder(id);
-      setBinders(updated);
-      setSeparators(getSeparators());
-      setChapters(getChapters());
-      setAuditLogs(getAuditLogs());
-    } else if (deleteModalState.type === 'separator') {
-      const updated = await deleteSeparator(id);
-      setSeparators(updated);
-      setBinders(getBinders());
-      setAuditLogs(getAuditLogs());
+    try {
+      if (deleteModalState.type === 'chapter') {
+        const updated = await deleteChapter(id);
+        setChapters(updated);
+        setBinders(getBinders());
+        setSeparators(getSeparators());
+        setAuditLogs(getAuditLogs());
+      } else if (deleteModalState.type === 'binder') {
+        const updated = await deleteBinder(id);
+        setBinders(updated);
+        setSeparators(getSeparators());
+        setChapters(getChapters());
+        setAuditLogs(getAuditLogs());
+      } else if (deleteModalState.type === 'separator') {
+        const updated = await deleteSeparator(id);
+        setSeparators(updated);
+        setBinders(getBinders());
+        setAuditLogs(getAuditLogs());
+      }
+    } catch (err) {
+      console.error("Delete operation error:", err);
+      throw err;
     }
   };
 
@@ -668,6 +673,7 @@ export default function App() {
         }}
         chapter={targetChapterForEdit}
         onUpdateChapter={handleUpdateChapter}
+        onDeleteChapter={handleOpenDeleteChapter}
       />
 
       {/* Modals: Binders */}
@@ -688,6 +694,7 @@ export default function App() {
         binder={targetBinderForEdit}
         chapters={chapters}
         onUpdateBinder={handleUpdateBinder}
+        onDeleteBinder={handleOpenDeleteBinder}
       />
 
       {/* Modals: Separators */}
@@ -712,6 +719,7 @@ export default function App() {
         separator={targetSeparationForEdit}
         binders={binders}
         onUpdateSeparator={handleUpdateSeparator}
+        onDeleteSeparator={handleOpenDeleteSeparation}
       />
 
       {/* Delete Confirmation Modal */}
