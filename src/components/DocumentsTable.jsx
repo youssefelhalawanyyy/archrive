@@ -16,6 +16,7 @@ import {
   FileSpreadsheet,
   Download
 } from 'lucide-react';
+import { matchesSearch } from '../utils/searchUtils';
 
 export default function DocumentsTable({ 
   separators = [], 
@@ -32,21 +33,22 @@ export default function DocumentsTable({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
 
-  // Filter separators based on search & status
+  // Filter separators based on search & status with Arabic normalization
   const filteredSeparators = useMemo(() => {
     return separators.filter((sep) => {
-      const q = searchQuery.trim().toLowerCase();
-      const matchesSearch = !q || (
-        (sep.name && sep.name.toLowerCase().includes(q)) ||
-        (sep.code && sep.code.toLowerCase().includes(q)) ||
-        (sep.chapterName && sep.chapterName.toLowerCase().includes(q)) ||
-        (sep.chapterCode && sep.chapterCode.toLowerCase().includes(q)) ||
-        (sep.binderName && sep.binderName.toLowerCase().includes(q)) ||
-        (sep.binderCode && sep.binderCode.toLowerCase().includes(q)) ||
-        (sep.location && sep.location.toLowerCase().includes(q)) ||
-        (sep.client && sep.client.toLowerCase().includes(q)) ||
-        (sep.borrower && sep.borrower.toLowerCase().includes(q)) ||
-        (sep.description && sep.description.toLowerCase().includes(q))
+      const q = searchQuery.trim();
+      const matches = !q || (
+        matchesSearch(sep.name, q) ||
+        matchesSearch(sep.code, q) ||
+        matchesSearch(sep.chapterName, q) ||
+        matchesSearch(sep.chapterCode, q) ||
+        matchesSearch(sep.binderName, q) ||
+        matchesSearch(sep.binderCode, q) ||
+        matchesSearch(sep.location, q) ||
+        matchesSearch(sep.client, q) ||
+        matchesSearch(sep.borrower, q) ||
+        matchesSearch(sep.description, q) ||
+        matchesSearch(sep.notes, q)
       );
 
       const matchesStatus = 
@@ -54,7 +56,7 @@ export default function DocumentsTable({
         (statusFilter === 'available' && sep.status === 'available') ||
         (statusFilter === 'checked_out' && sep.status === 'checked_out');
 
-      return matchesSearch && matchesStatus;
+      return matches && matchesStatus;
     });
   }, [separators, searchQuery, statusFilter]);
 

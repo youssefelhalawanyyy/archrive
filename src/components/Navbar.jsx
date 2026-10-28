@@ -14,6 +14,7 @@ import {
   WifiOff,
   LogOut
 } from 'lucide-react';
+import OmniSearchDropdown from './OmniSearchDropdown';
 
 export default function Navbar({ 
   searchQuery, 
@@ -28,7 +29,12 @@ export default function Navbar({
   onOpenExportExcel,
   onOpenOfflineModal,
   currentUser = null,
-  onLogout = null
+  onLogout = null,
+  chapters = [],
+  binders = [],
+  separators = [],
+  onNavigateToItem = null,
+  onInspectItem = null
 }) {
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
@@ -149,6 +155,21 @@ export default function Navbar({
                 <Mic className="w-3.5 h-3.5" />
               </button>
             </div>
+
+            {/* Desktop OmniSearch Live Dropdown */}
+            <OmniSearchDropdown
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              chapters={chapters}
+              binders={binders}
+              separators={separators}
+              onSelectItem={(item) => {
+                if (onNavigateToItem) onNavigateToItem(item);
+              }}
+              onInspectItem={(item) => {
+                if (onInspectItem) onInspectItem(item);
+              }}
+            />
           </div>
         </div>
 
@@ -413,6 +434,23 @@ export default function Navbar({
                 مسح
               </button>
             )}
+
+            {/* Mobile OmniSearch Live Dropdown */}
+            <OmniSearchDropdown
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              chapters={chapters}
+              binders={binders}
+              separators={separators}
+              onSelectItem={(item) => {
+                setIsMobileSearchOpen(false);
+                if (onNavigateToItem) onNavigateToItem(item);
+              }}
+              onInspectItem={(item) => {
+                if (onInspectItem) onInspectItem(item);
+              }}
+              onClose={() => setIsMobileSearchOpen(false)}
+            />
           </div>
         </div>
       )}

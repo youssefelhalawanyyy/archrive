@@ -21,6 +21,7 @@ import OfflineSyncModal from './components/OfflineSyncModal';
 import BindersView from './components/BindersView';
 import ReportsView from './components/ReportsView';
 import LoginPage from './components/LoginPage';
+import OmniDetailModal from './components/OmniDetailModal';
 
 import { 
   getChapters,
@@ -105,6 +106,33 @@ export default function App() {
   const [targetCheckoutItem, setTargetCheckoutItem] = useState(null);
   const [targetQRItem, setTargetQRItem] = useState(null);
   const [targetPrintItem, setTargetPrintItem] = useState(null);
+
+  // Global OmniSearch Navigation & Inspection State
+  const [targetHierarchyChapterId, setTargetHierarchyChapterId] = useState(null);
+  const [targetHierarchyBinderId, setTargetHierarchyBinderId] = useState(null);
+  const [inspectItem, setInspectItem] = useState(null);
+  const [isInspectModalOpen, setIsInspectModalOpen] = useState(false);
+
+  const handleNavigateToItem = (item) => {
+    if (!item) return;
+    setCurrentTab('hierarchy');
+
+    if (item.entityType === 'chapter') {
+      setTargetHierarchyChapterId(item.id);
+      setTargetHierarchyBinderId(null);
+    } else if (item.entityType === 'binder') {
+      setTargetHierarchyChapterId(item.chapterId);
+      setTargetHierarchyBinderId(item.id);
+    } else if (item.entityType === 'separator') {
+      if (item.chapterId) setTargetHierarchyChapterId(item.chapterId);
+      if (item.binderId) setTargetHierarchyBinderId(item.binderId);
+    }
+  };
+
+  const handleInspectItem = (item) => {
+    setInspectItem(item);
+    setIsInspectModalOpen(true);
+  };
 
   // Subscribe to offline queue changes
   useEffect(() => {
@@ -352,6 +380,11 @@ export default function App() {
         offlineQueueCount={offlineQueue.length}
         currentUser={currentUser}
         onLogout={handleLogout}
+        chapters={chapters}
+        binders={binders}
+        separators={separators}
+        onNavigateToItem={handleNavigateToItem}
+        onInspectItem={handleInspectItem}
         onToggleMobileMenu={() => setIsMobileDrawerOpen(!isMobileDrawerOpen)}
         onTriggerInstall={() => setIsInstallTriggered(true)}
         onOpenQRModal={() => handleOpenQRModal()}
@@ -396,6 +429,8 @@ export default function App() {
               chapters={chapters}
               binders={binders}
               separators={separators}
+              targetChapterId={targetHierarchyChapterId}
+              targetBinderId={targetHierarchyBinderId}
               globalSearchQuery={searchQuery}
               setGlobalSearchQuery={setSearchQuery}
               onOpenAddChapterModal={() => setIsAddChapterModalOpen(true)}
@@ -692,6 +727,17 @@ export default function App() {
       <OfflineSyncModal
         isOpen={isOfflineModalOpen}
         onClose={() => setIsOfflineModalOpen(false)}
+      />
+
+      {/* OmniDetail Full Dossier Modal (Tell Everything About It) */}
+      <OmniDetailModal
+        isOpen={isInspectModalOpen}
+        onClose={() => setIsInspectModalOpen(false)}
+        item={inspectItem}
+        onNavigateToItem={handleNavigateToItem}
+        onOpenQRModal={handleOpenQRModal}
+        onOpenPrintModal={handleOpenPrintModal}
+        onToggleStatus={handleOpenStatusToggle}
       />
 
     </div>

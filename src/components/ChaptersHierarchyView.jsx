@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   BookOpen, 
   FolderArchive, 
@@ -23,6 +23,7 @@ import {
   FileSpreadsheet,
   Download
 } from 'lucide-react';
+import { matchesSearch } from '../utils/searchUtils';
 
 export default function ChaptersHierarchyView({
   chapters = [],
@@ -43,15 +44,29 @@ export default function ChaptersHierarchyView({
   onOpenPrintModal,
   onDeleteSeparator,
   onOpenExcel,
-  onOpenExportExcel
+  onOpenExportExcel,
+  targetChapterId = null,
+  targetBinderId = null
 }) {
-  const [selectedChapterId, setSelectedChapterId] = useState(chapters[0]?.id || 'ch-amn');
-  const [selectedBinderId, setSelectedBinderId] = useState(null);
+  const [selectedChapterId, setSelectedChapterId] = useState(targetChapterId || chapters[0]?.id || 'ch-amn');
+  const [selectedBinderId, setSelectedBinderId] = useState(targetBinderId || null);
   const [localSearch, setLocalSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'available', 'checked_out'
   const [viewMode, setViewMode] = useState(() => {
     return typeof window !== 'undefined' && window.innerWidth < 768 ? 'cards' : 'table';
   });
+
+  useEffect(() => {
+    if (targetChapterId) {
+      setSelectedChapterId(targetChapterId);
+    }
+  }, [targetChapterId]);
+
+  useEffect(() => {
+    if (targetBinderId) {
+      setSelectedBinderId(targetBinderId);
+    }
+  }, [targetBinderId]);
 
   // If selected chapter is invalid, default to first chapter
   const activeChapter = chapters.find(c => c.id === selectedChapterId) || chapters[0];
@@ -90,19 +105,38 @@ export default function ChaptersHierarchyView({
       if (statusFilter === 'available' && s.status !== 'available') return false;
       if (statusFilter === 'checked_out' && s.status !== 'checked_out') return false;
 
-      // Search filter
+      // Search filter with Arabic normalization
       if (effectiveSearch) {
-        const matchesName = s.name?.toLowerCase().includes(effectiveSearch);
-        const matchesCode = s.code?.toLowerCase().includes(effectiveSearch);
-        const matchesClient = s.client?.toLowerCase().includes(effectiveSearch);
-        const matchesDesc = s.description?.toLowerCase().includes(effectiveSearch);
-        const matchesBorrower = s.borrower?.toLowerCase().includes(effectiveSearch);
-        return matchesName || matchesCode || matchesClient || matchesDesc || matchesBorrower;
+        return (
+          matchesSearch(s.name, effectiveSearch) ||
+          matchesSearch(s.code, effectiveSearch) ||
+          matchesSearch(s.client, effectiveSearch) ||
+          matchesSearch(s.description, effectiveSearch) ||
+          matchesSearch(s.borrower, effectiveSearch) ||
+          matchesSearch(s.location, effectiveSearch) ||
+          matchesSearch(s.notes, effectiveSearch)
+        );
       }
 
       return true;
     });
   }, [separators, activeBinder, statusFilter, effectiveSearch]);
+
+  // Count matches across ALL binders in the archive for user guidance
+  const allArchiveMatchesCount = useMemo(() => {
+    if (!effectiveSearch) return 0;
+    return separators.filter(s => {
+      return (
+        matchesSearch(s.name, effectiveSearch) ||
+        matchesSearch(s.code, effectiveSearch) ||
+        matchesSearch(s.client, effectiveSearch) ||
+        matchesSearch(s.description, effectiveSearch) ||
+        matchesSearch(s.borrower, effectiveSearch) ||
+        matchesSearch(s.location, effectiveSearch) ||
+        matchesSearch(s.notes, effectiveSearch)
+      );
+    }).length;
+  }, [separators, effectiveSearch]);
 
   // Stats for the active binder
   const totalInActiveBinder = separators.filter(
@@ -853,12 +887,25 @@ export default function ChaptersHierarchyView({
           ) : (
             <div className="p-8 text-center bg-slate-50 rounded-xl border border-slate-200">
               <Layers className="w-10 h-10 text-slate-400 mx-auto mb-2" />
-              <h4 className="text-sm font-bold text-slate-800">
-                {effectiveSearch ? 'لا توجد فواصل مطابقة لبحثك' : 'لا توجد فواصل كرتونية مضافة في هذا المجلد بعد'}
-              </h4>
-              <p className="text-xs text-slate-500 mt-1">
-                {effectiveSearch ? 'جرّب البحث بكلمة أخرى أو قم بإلغاء التصفية' : 'أضف أول فاصل كرتوني داخل هذا المجلد لترتيب وتوثيق الأوراق'}
-              </p>
+              {effectiveSearch && allArchiveMatchesCount > 0 ? (
+                <div>
+                  <h4 className="text-sm font-bold text-blue-900">
+                    لا توجد فواصل مطابقة لبحثك في هذا المجلد المحدد ({activeBinder?.name})
+                  </h4>
+                  <p className="text-xs text-blue-700 mt-1 max-w-md mx-auto">
+                    ولكن وجدنا <span className="font-extrabold underline">{allArchiveMatchesCount} فاصل مطابق</span> في مجلدات وأبواب أخرى! اضغط على قائمة البحث في الشريط العلوي لتصفحها والانتقال إليها مباشرة.
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <h4 className="text-sm font-bold text-slate-800">
+                    {effectiveSearch ? 'لا توجد فواصل مطابقة لبحثك في كامل المنظومة' : 'لا توجد فواصل كرتونية مضافة في هذا المجلد بعد'}
+                  </h4>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {effectiveSearch ? 'جرّب البحث بكلمة أخرى أو بكود الفاصل أو اسم الجهة' : 'أضف أول فاصل كرتوني داخل هذا المجلد لترتيب وتوثيق الأوراق'}
+                  </p>
+                </div>
+              )}
               {!effectiveSearch && (
                 <button
                   type="button"
