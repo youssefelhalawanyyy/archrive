@@ -103,11 +103,6 @@ export default function CheckoutModal({ isOpen, onClose, document, onConfirmTogg
                 <FolderArchive className="w-3.5 h-3.5 text-blue-600" />
                 <span>المجلد: {document.binderName || document.binderCode}</span>
               </span>
-              {document.papersCount && (
-                <span className="text-slate-500 font-mono text-[11px]">
-                  ({document.papersCount} ورقة داخل الفاصل)
-                </span>
-              )}
             </div>
           </div>
 

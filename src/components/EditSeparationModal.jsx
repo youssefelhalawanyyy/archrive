@@ -19,7 +19,6 @@ export default function EditSeparationModal({
 
   const [name, setName] = useState(separator.name || '');
   const [selectedBinderId, setSelectedBinderId] = useState(separator.binderId || binders[0]?.id || '');
-  const [papersCount, setPapersCount] = useState(separator.papersCount || 20);
   const [client, setClient] = useState(separator.client || '');
   const [date, setDate] = useState(separator.date || '');
   const [color, setColor] = useState(separator.color || '#38bdf8');
@@ -30,7 +29,6 @@ export default function EditSeparationModal({
     if (separator) {
       setName(separator.name || '');
       setSelectedBinderId(separator.binderId || binders[0]?.id || '');
-      setPapersCount(separator.papersCount || 20);
       setClient(separator.client || '');
       setDate(separator.date || '');
       setColor(separator.color || '#38bdf8');
@@ -49,7 +47,6 @@ export default function EditSeparationModal({
     onUpdateSeparator(separator.id, {
       name: name.trim(),
       binderId: selectedBinderId,
-      papersCount: parseInt(papersCount) || 1,
       client: client.trim() || 'عام',
       date: date.trim(),
       color: color,
@@ -142,22 +139,8 @@ export default function EditSeparationModal({
             </select>
           </div>
 
-          {/* Papers count & Client */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                عدد الأوراق المحتواة
-              </label>
-              <input
-                type="number"
-                min={1}
-                max={500}
-                value={papersCount}
-                onChange={(e) => setPapersCount(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-mono font-bold text-slate-900"
-              />
-            </div>
-
+          {/* Client & Date Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
                 الجهة / العميل المستفيد
@@ -170,20 +153,19 @@ export default function EditSeparationModal({
                 className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs text-slate-900 font-bold"
               />
             </div>
-          </div>
 
-          {/* Date */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              تاريخ الإيداع في المجلد
-            </label>
-            <input
-              type="text"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              placeholder="YYYY/MM/DD"
-              className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-mono font-bold text-slate-900"
-            />
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                تاريخ الإيداع في المجلد
+              </label>
+              <input
+                type="text"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                placeholder="YYYY/MM/DD"
+                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-mono font-bold text-slate-900"
+              />
+            </div>
           </div>
 
           {/* Description */}

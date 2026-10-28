@@ -385,7 +385,6 @@ export default function ExcelImportExportModal({
                               <th className="py-2.5 px-3">السطر</th>
                               <th className="py-2.5 px-3">اسم الفاصل ومحتواه</th>
                               <th className="py-2.5 px-3">المجلد المحدد</th>
-                              <th className="py-2.5 px-3">الأوراق</th>
                               <th className="py-2.5 px-3">الجهة / العميل</th>
                               <th className="py-2.5 px-3">التاريخ</th>
                               <th className="py-2.5 px-3 text-center">حالة الفحص</th>
@@ -410,7 +409,6 @@ export default function ExcelImportExportModal({
                                     </span>
                                   )}
                                 </td>
-                                <td className="py-2 px-3 font-mono">{item.papersCount}</td>
                                 <td className="py-2 px-3 text-slate-600 truncate max-w-[120px]">{item.client}</td>
                                 <td className="py-2 px-3 font-mono text-slate-500">{item.date}</td>
                                 <td className="py-2 px-3 text-center">

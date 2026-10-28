@@ -32,7 +32,6 @@ export default function AddSeparationModal({
   const [name, setName] = useState('');
   const [autoCode, setAutoCode] = useState('');
   const [color, setColor] = useState('#38bdf8');
-  const [papersCount, setPapersCount] = useState(25);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0].replace(/-/g, '/'));
   const [client, setClient] = useState('');
   const [status, setStatus] = useState('available');
@@ -79,7 +78,6 @@ export default function AddSeparationModal({
       shelf: currentBinder?.shelf || 'رف 3',
       location: `${currentBinder?.cabinet || 'خزانة أ'} - ${currentBinder?.shelf || 'رف 3'}`,
       color: color,
-      papersCount: parseInt(papersCount) || 1,
       date: date,
       client: client.trim() || 'عام',
       status: status,
@@ -198,8 +196,8 @@ export default function AddSeparationModal({
             </div>
           </div>
 
-          {/* Date, Papers Count, Client */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Date & Client Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
                 تاريخ / فترة الفاصل
@@ -209,19 +207,6 @@ export default function AddSeparationModal({
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 placeholder="YYYY/MM/DD"
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs text-left font-bold"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                عدد الأوراق داخل الفاصل
-              </label>
-              <input
-                type="number"
-                min="1"
-                value={papersCount}
-                onChange={(e) => setPapersCount(parseInt(e.target.value) || 1)}
                 className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs text-left font-bold"
               />
             </div>

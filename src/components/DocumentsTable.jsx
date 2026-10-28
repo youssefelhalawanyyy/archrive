@@ -219,9 +219,6 @@ export default function DocumentsTable({
                     <span>{sep.location || 'الخزانة الرئيسية'}</span>
                   </span>
 
-                  <span className="text-slate-500 font-mono">
-                    <strong>{sep.papersCount || 20}</strong> ورقة
-                  </span>
                 </div>
 
                 {/* Mobile Quick Action Buttons */}
@@ -284,7 +281,6 @@ export default function DocumentsTable({
               <th scope="col" className="py-3 px-4">اسم الفاصل ومحتواه</th>
               <th scope="col" className="py-3 px-4">المجلد والموضوع</th>
               <th scope="col" className="py-3 px-4">الموقع الميداني</th>
-              <th scope="col" className="py-3 px-4">عدد الأوراق</th>
               <th scope="col" className="py-3 px-4 text-center">الحالة</th>
               <th scope="col" className="py-3 px-4 text-center">إجراءات</th>
             </tr>
@@ -340,11 +336,6 @@ export default function DocumentsTable({
                         <MapPin className="w-3.5 h-3.5 text-blue-600" />
                         <span>{sep.location || `${sep.cabinet || 'الخزانة الرئيسية'} - ${sep.shelf || 'رف 1'}`}</span>
                       </div>
-                    </td>
-
-                    {/* Papers Count */}
-                    <td className="py-3.5 px-4 whitespace-nowrap font-mono text-xs text-slate-700">
-                      <strong>{sep.papersCount || 20}</strong> ورقة
                     </td>
 
                     {/* Status */}

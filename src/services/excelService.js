@@ -23,7 +23,6 @@ export function exportArchiveToExcel({
     "الخزانة": s.cabinet || 'الخزانة الرئيسية',
     "الرف": s.shelf || 'رف 1',
     "الموقع الميداني": s.location || '',
-    "عدد الأوراق المحفوظة": s.papersCount || 20,
     "الجهة / العميل المستفيد": s.client || 'عام',
     "تاريخ الإيداع": s.date || '',
     "حالة التواجد": s.status === 'available' ? 'متاح بالمجلد' : 'مستعار ميدانياً',
@@ -119,7 +118,6 @@ export function downloadImportTemplate(binders = []) {
     {
       "اسم الفاصل ومحتواه *": "عقود التوريد والمناقصات للربع الأول",
       "كود المجلد أو اسمه *": binders[0]?.code || "AMN-01",
-      "عدد الأوراق": 35,
       "الجهة / العميل المستفيد": "شركة النيل للمقاولات",
       "تاريخ الإيداع (YYYY/MM/DD)": "2024/02/10",
       "الوصف والملاحظات": "أصول فواتير التوريد وشهادات الفحص والاستلام",
@@ -128,7 +126,6 @@ export function downloadImportTemplate(binders = []) {
     {
       "اسم الفاصل ومحتواه *": "كشوفات المستحقات والتأمينات",
       "كود المجلد أو اسمه *": binders[0]?.code || "AMN-01",
-      "عدد الأوراق": 18,
       "الجهة / العميل المستفيد": "إدارة الشؤون الإدارية",
       "تاريخ الإيداع (YYYY/MM/DD)": "2024/02/12",
       "الوصف والملاحظات": "مطالبات التأمين الصحي لمنتسبي القطاع",
@@ -137,7 +134,6 @@ export function downloadImportTemplate(binders = []) {
     {
       "اسم الفاصل ومحتواه *": "أذونات الصرف ومحاضر التسليم",
       "كود المجلد أو اسمه *": binders[1]?.code || "MED-01",
-      "عدد الأوراق": 42,
       "الجهة / العميل المستفيد": "مستشفى الشرطة",
       "تاريخ الإيداع (YYYY/MM/DD)": "2024/02/15",
       "الوصف والملاحظات": "أذونات استلام الأدوية والمستلزمات الطبية",
@@ -224,13 +220,6 @@ export async function parseExcelImportFile(file, binders = []) {
             ""
           ).toString().trim();
 
-          const papersCount = parseInt(
-            row["عدد الأوراق"] || 
-            row["الأوراق"] || 
-            row["papersCount"] || 
-            20
-          ) || 20;
-
           const client = (
             row["الجهة / العميل المستفيد"] || 
             row["الجهة"] || 
@@ -286,7 +275,6 @@ export async function parseExcelImportFile(file, binders = []) {
             name: name || `فاصل كرتوني بدون عنوان (صف ${idx + 2})`,
             binderInput,
             matchedBinder,
-            papersCount,
             client,
             date,
             description,

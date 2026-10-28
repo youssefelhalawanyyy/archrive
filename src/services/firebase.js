@@ -909,7 +909,7 @@ export const updateSeparator = async (id, updatedFields) => {
     performedBy: "أحمد",
     borrower: null,
     date: new Date().toISOString().replace('T', ' ').substring(0, 16),
-    reason: `تم تحديث بيانات الفاصل (عدد الأوراق: ${item.papersCount}، المجلد: ${item.binderName})`
+    reason: `تم تحديث بيانات الفاصل (المجلد: ${item.binderName})`
   });
 
   return updatedSeps;

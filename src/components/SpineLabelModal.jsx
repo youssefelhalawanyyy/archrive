@@ -40,7 +40,7 @@ export default function SpineLabelModal({
     activeItem && (
       activeItem.totalCapacity !== undefined ||
       activeItem.currentSeparatorsCount !== undefined ||
-      (!activeItem.papersCount && activeItem.code && !activeItem.code.includes('-S'))
+      (!activeItem.binderId && activeItem.code && !activeItem.code.includes('-S'))
     )
   );
 
@@ -78,7 +78,6 @@ export default function SpineLabelModal({
     : (separators.find(s => s.binderId === currentBinder.id || s.binderCode === currentBinder.code) || {
       name: "فواتير الموردين - الربع الأول",
       code: `${currentBinder?.code || 'FIN-01'}-S01`,
-      papersCount: 25,
       color: "#38bdf8",
       client: "هيئة الزكاة والضريبة والجمارك",
       date: "2024/01/15",
@@ -88,11 +87,6 @@ export default function SpineLabelModal({
   // Separators belonging to this binder for the index table
   const binderSeparators = separators.filter(
     s => s.binderId === currentBinder?.id || s.binderCode === currentBinder?.code
-  );
-
-  // Calculated totals for the binder
-  const totalPapersInBinder = binderSeparators.reduce(
-    (acc, curr) => acc + (parseInt(curr.papersCount) || 20), 0
   );
 
   const handlePrint = () => {
@@ -358,7 +352,6 @@ export default function SpineLabelModal({
                           <th className="py-2.5 px-3 border-l border-slate-200">كود الفاصل</th>
                           <th className="py-2.5 px-3 border-l border-slate-200">محتوى وعنوان الفاصل</th>
                           <th className="py-2.5 px-3 border-l border-slate-200">الجهة / العميل</th>
-                          <th className="py-2.5 px-3 border-l border-slate-200 text-center">الأوراق</th>
                           <th className="py-2.5 px-3 border-l border-slate-200 text-center">التاريخ</th>
                           <th className="py-2.5 px-3 text-center">الحالة</th>
                         </tr>
@@ -388,9 +381,6 @@ export default function SpineLabelModal({
                               <td className="py-2.5 px-3 border-l border-slate-200 text-slate-700 font-semibold whitespace-nowrap">
                                 {sep.client || 'عام'}
                               </td>
-                              <td className="py-2.5 px-3 text-center font-mono font-bold text-slate-900 border-l border-slate-200 whitespace-nowrap">
-                                {sep.papersCount || 20}
-                              </td>
                               <td className="py-2.5 px-3 text-center font-mono text-slate-600 border-l border-slate-200 whitespace-nowrap">
                                 {sep.date}
                               </td>
@@ -413,13 +403,10 @@ export default function SpineLabelModal({
                       <tfoot className="bg-slate-100 border-t-2 border-slate-300 font-bold text-slate-800 text-xs">
                         <tr>
                           <td colSpan="5" className="py-2.5 px-4 text-left border-l border-slate-200">
-                            الإجمالي العام للأوراق المحفوظة في هذا المجلد:
+                            الإجمالي العام للفواصل الكرتونية في هذا المجلد:
                           </td>
-                          <td className="py-2.5 px-3 text-center font-mono font-black text-sm text-slate-900 border-l border-slate-200">
-                            {totalPapersInBinder} ورقة
-                          </td>
-                          <td colSpan="2" className="py-2.5 px-3 text-center text-slate-600 font-medium">
-                            {binderSeparators.length} فواصل
+                          <td colSpan="2" className="py-2.5 px-3 text-center font-mono font-black text-sm text-slate-900">
+                            {binderSeparators.length} فواصل كرتونية
                           </td>
                         </tr>
                       </tfoot>
@@ -652,23 +639,16 @@ export default function SpineLabelModal({
                   </div>
 
                   {/* Quantitative Details */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
-                    <div className="p-3 rounded-lg bg-blue-50/70 border border-blue-200 text-center">
-                      <div className="text-xs text-blue-800 font-bold">عدد الأوراق المحفوظة</div>
-                      <div className="font-mono text-2xl font-black text-blue-950 mt-0.5">
-                        {currentSeparator.papersCount || 20} ورقة
-                      </div>
-                    </div>
-
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                     <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-center">
-                      <div className="text-xs text-slate-500 font-bold">الجهة / العميل</div>
+                      <div className="text-xs text-slate-500 font-bold">الجهة / العميل التابع له</div>
                       <div className="text-sm font-black text-slate-900 mt-1 truncate">
                         {currentSeparator.client || 'عام'}
                       </div>
                     </div>
 
-                    <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-center col-span-2 sm:col-span-1">
-                      <div className="text-xs text-slate-500 font-bold">حالة التواجد الميداني</div>
+                    <div className="p-3 rounded-lg bg-emerald-50/70 border border-emerald-200 text-center">
+                      <div className="text-xs text-emerald-800 font-bold">حالة التواجد الميداني</div>
                       <div className="text-sm font-black text-emerald-700 mt-1">
                         🟢 متاح داخل المجلد
                       </div>
@@ -757,7 +737,7 @@ export default function SpineLabelModal({
                     </h4>
 
                     <div className="text-[10px] text-slate-500 mt-1 font-medium">
-                      {currentBinder.cabinet} • {currentBinder.shelf} • <strong>{currentSeparator.papersCount || 20} ورقة</strong>
+                      {currentBinder.cabinet} • {currentBinder.shelf} • <strong>{currentSeparator.client || 'عام'}</strong>
                     </div>
                   </div>
 
@@ -825,7 +805,7 @@ export default function SpineLabelModal({
                         </div>
 
                         <div className="text-[10px] text-slate-500 mt-0.5">
-                          {currentBinder.cabinet} • {sep.papersCount || 20} ورقة • {sep.client || 'عام'}
+                          {currentBinder.cabinet} • {currentBinder.shelf} • {sep.client || 'عام'}
                         </div>
                       </div>
 

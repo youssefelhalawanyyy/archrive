@@ -658,7 +658,6 @@ export default function ChaptersHierarchyView({
                     <tr>
                       <th className="py-3.5 px-4">كود الفاصل</th>
                       <th className="py-3.5 px-4">اسم الفاصل ومحتواه</th>
-                      <th className="py-3.5 px-4">عدد الأوراق</th>
                       <th className="py-3.5 px-4">الجهة / العميل</th>
                       <th className="py-3.5 px-4">تاريخ الإيداع</th>
                       <th className="py-3.5 px-4 text-center">حالة التواجد</th>
@@ -698,11 +697,6 @@ export default function ChaptersHierarchyView({
                                 {sep.description}
                               </div>
                             )}
-                          </td>
-
-                          {/* Papers Count */}
-                          <td className="py-3.5 px-4 whitespace-nowrap font-mono text-xs text-slate-700">
-                            <span className="font-bold text-slate-900 text-sm">{sep.papersCount || 20}</span> ورقة
                           </td>
 
                           {/* Client */}
@@ -812,10 +806,6 @@ export default function ChaptersHierarchyView({
 
                         {/* Metadata Details */}
                         <div className="mt-3 text-xs text-slate-600 space-y-1.5 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                          <div className="flex items-center justify-between">
-                            <span className="text-slate-500">الأوراق المحفوظة:</span>
-                            <span className="font-extrabold text-slate-900 font-mono">{sep.papersCount || 20} ورقة</span>
-                          </div>
                           {sep.client && (
                             <div className="flex items-center justify-between">
                               <span className="text-slate-500">الجهة / العميل:</span>
