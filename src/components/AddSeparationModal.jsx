@@ -130,18 +130,18 @@ export default function AddSeparationModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4">
           
-          {/* Target Binder & Auto Code */}
-          <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-3">
+          {/* Target Binder & Auto Code Card */}
+          <div className="p-4 rounded-xl bg-slate-50/80 border border-slate-200/90 space-y-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
                 المجلد المستهدف (Binder) <span className="text-red-500">*</span>
               </label>
               <select
                 value={selectedBinderId}
                 onChange={(e) => setSelectedBinderId(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white font-bold text-slate-900 text-xs outline-hidden"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white font-bold text-slate-900 text-xs focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-hidden transition-all shadow-2xs"
               >
                 {binders.map((b) => (
                   <option key={b.id} value={b.id}>
@@ -151,9 +151,9 @@ export default function AddSeparationModal({
               </select>
             </div>
 
-            <div className="flex items-center justify-between bg-white p-2.5 rounded-lg border border-slate-200 text-xs">
-              <span className="text-slate-600 font-medium">كود الفاصل التلقائي:</span>
-              <div className="flex items-center gap-1 font-mono font-bold text-blue-800 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+            <div className="flex items-center justify-between bg-white px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs shadow-2xs">
+              <span className="text-slate-600 font-semibold">كود الفاصل التلقائي:</span>
+              <div className="flex items-center gap-1.5 font-mono font-bold text-blue-800 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200">
                 <Sparkles className="w-3.5 h-3.5 text-blue-600" />
                 <span>{autoCode}</span>
               </div>
@@ -162,44 +162,23 @@ export default function AddSeparationModal({
 
           {/* Separator Name */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
-              اسم أو عنوان الفاصل (Separator Name) <span className="text-red-500">*</span>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+              عنوان أو اسم الفاصل الكرتوني <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="مثال: فواتير الربع الأول 2023، عقود المقاولات، مسوغات التعيين..."
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-hidden text-xs font-bold text-slate-900 transition-all"
+              placeholder="مثال: فواتير المشتريات 2024، عقود المقاولات، مسوغات التعيين..."
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-hidden text-xs sm:text-sm font-bold text-slate-900 transition-all shadow-2xs placeholder:text-slate-400"
             />
           </div>
 
-          {/* Color Presets */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              لون تبويب الفاصل (لتمييزه بالعين في كعب المجلد)
-            </label>
-            <div className="flex items-center gap-2">
-              {colorPresets.map((c) => (
-                <button
-                  key={c.value}
-                  type="button"
-                  onClick={() => setColor(c.value)}
-                  className={`w-7 h-7 rounded-full border-2 transition-transform cursor-pointer ${
-                    color === c.value ? 'scale-110 border-slate-900 ring-2 ring-blue-500/20' : 'border-transparent'
-                  }`}
-                  style={{ backgroundColor: c.value }}
-                  title={c.label}
-                />
-              ))}
-            </div>
-          </div>
-
           {/* Date & Client Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
                 تاريخ / فترة الفاصل
               </label>
               <input
@@ -207,21 +186,45 @@ export default function AddSeparationModal({
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 placeholder="YYYY/MM/DD"
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-xs text-left font-bold"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white font-mono text-xs text-left font-bold text-slate-900 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-hidden transition-all shadow-2xs"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                الجهة / العميل المرتبط
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                الجهة / العميل المستفيد
               </label>
               <input
                 type="text"
                 value={client}
                 onChange={(e) => setClient(e.target.value)}
-                placeholder="مثال: شركة الأفق..."
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-medium"
+                placeholder="مثال: شركة الأفق، هيئة الضرائب..."
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-900 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-hidden transition-all shadow-2xs placeholder:text-slate-400"
               />
+            </div>
+          </div>
+
+          {/* Color Presets */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-2">
+              لون لسان تبويب الفاصل (لتمييزه بالعين في كعب المجلد)
+            </label>
+            <div className="flex flex-wrap items-center gap-2.5">
+              {colorPresets.map((c) => (
+                <button
+                  key={c.value}
+                  type="button"
+                  onClick={() => setColor(c.value)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                    color === c.value
+                      ? 'border-blue-600 bg-blue-50 text-blue-900 shadow-2xs ring-2 ring-blue-600/20'
+                      : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  <span className="w-3.5 h-3.5 rounded-full shrink-0 shadow-2xs" style={{ backgroundColor: c.value }} />
+                  <span>{c.label}</span>
+                </button>
+              ))}
             </div>
           </div>
 
@@ -231,10 +234,10 @@ export default function AddSeparationModal({
               الحالة الفيزيائية للفاصل
             </label>
             <div className="grid grid-cols-2 gap-3">
-              <label className={`flex items-center gap-2.5 p-2.5 rounded-lg border cursor-pointer transition-all ${
+              <label className={`flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition-all ${
                 status === 'available'
-                  ? 'border-emerald-500 bg-emerald-50/70 text-emerald-900'
-                  : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                  ? 'border-emerald-500 bg-emerald-50/80 text-emerald-900 font-bold shadow-2xs'
+                  : 'border-slate-200 hover:bg-slate-50 text-slate-700 bg-white'
               }`}>
                 <input
                   type="radio"
@@ -244,16 +247,16 @@ export default function AddSeparationModal({
                   onChange={() => { setStatus('available'); setBorrower(''); }}
                   className="sr-only"
                 />
-                <span className="w-3.5 h-3.5 rounded-full border-2 border-emerald-600 flex items-center justify-center">
-                  {status === 'available' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>}
+                <span className="w-4 h-4 rounded-full border-2 border-emerald-600 flex items-center justify-center">
+                  {status === 'available' && <span className="w-2 h-2 rounded-full bg-emerald-600"></span>}
                 </span>
-                <span className="text-xs font-bold">🟢 متاح في المجلد</span>
+                <span className="text-xs font-bold">متاح في المجلد</span>
               </label>
 
-              <label className={`flex items-center gap-2.5 p-2.5 rounded-lg border cursor-pointer transition-all ${
+              <label className={`flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition-all ${
                 status === 'checked_out'
-                  ? 'border-amber-500 bg-amber-50/70 text-amber-900'
-                  : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                  ? 'border-amber-500 bg-amber-50/80 text-amber-900 font-bold shadow-2xs'
+                  : 'border-slate-200 hover:bg-slate-50 text-slate-700 bg-white'
               }`}>
                 <input
                   type="radio"
@@ -263,10 +266,10 @@ export default function AddSeparationModal({
                   onChange={() => setStatus('checked_out')}
                   className="sr-only"
                 />
-                <span className="w-3.5 h-3.5 rounded-full border-2 border-amber-600 flex items-center justify-center">
-                  {status === 'checked_out' && <span className="w-1.5 h-1.5 rounded-full bg-amber-600"></span>}
+                <span className="w-4 h-4 rounded-full border-2 border-amber-600 flex items-center justify-center">
+                  {status === 'checked_out' && <span className="w-2 h-2 rounded-full bg-amber-600"></span>}
                 </span>
-                <span className="text-xs font-bold">🟡 مستعار ميدانياً</span>
+                <span className="text-xs font-bold">معار ميدانياً</span>
               </label>
             </div>
 
@@ -280,7 +283,7 @@ export default function AddSeparationModal({
                   value={borrower}
                   onChange={(e) => setBorrower(e.target.value)}
                   placeholder="مثال: أحمد الراجحي (قسم المالية)"
-                  className="w-full px-3 py-2 rounded-lg border border-amber-300 bg-amber-50/50 text-xs font-bold text-amber-900"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 bg-white text-xs font-bold text-amber-900 shadow-2xs"
                 />
               </div>
             )}
@@ -288,30 +291,30 @@ export default function AddSeparationModal({
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">
               ملاحظات ومحتوى الفاصل
             </label>
             <input
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="وصف مختصر لمحتويات الأوراق داخل هذا الفاصل..."
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-medium"
+              placeholder="وصف مختصر لمحتويات الوثائق داخل هذا الفاصل..."
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs text-slate-900 font-medium focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-hidden transition-all shadow-2xs placeholder:text-slate-400"
             />
           </div>
 
           {/* Actions */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 text-xs font-bold transition-all"
+              className="px-4 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 text-xs font-bold transition-all cursor-pointer"
             >
               إلغاء
             </button>
             <button
               type="submit"
-              className="flex items-center gap-1.5 px-5 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer active:scale-95"
             >
               <Layers className="w-4 h-4" />
               <span>إضافة الفاصل للمجلد وتوليد الكود</span>

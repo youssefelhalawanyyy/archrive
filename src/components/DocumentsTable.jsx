@@ -92,74 +92,43 @@ export default function DocumentsTable({
           </p>
         </div>
 
-        {/* Status Filter Badges & Excel Quick Actions */}
-        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg text-xs font-medium border border-slate-200">
-            <button
-              type="button"
-              onClick={() => { setStatusFilter('all'); setCurrentPage(1); }}
-              className={`px-3 py-1.5 rounded text-xs font-bold transition-all cursor-pointer ${
-                statusFilter === 'all' 
-                  ? 'bg-white text-slate-900 shadow-2xs' 
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              الكل ({separators.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => { setStatusFilter('available'); setCurrentPage(1); }}
-              className={`px-3 py-1.5 rounded text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                statusFilter === 'available' 
-                  ? 'bg-emerald-700 text-white shadow-2xs' 
-                  : 'text-emerald-800 hover:bg-emerald-50'
-              }`}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              <span>متاح ({separators.filter(s => s.status === 'available').length})</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => { setStatusFilter('checked_out'); setCurrentPage(1); }}
-              className={`px-3 py-1.5 rounded text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                statusFilter === 'checked_out' 
-                  ? 'bg-amber-700 text-white shadow-2xs' 
-                  : 'text-amber-800 hover:bg-amber-50'
-              }`}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-300"></span>
-              <span>مستعار ({separators.filter(s => s.status === 'checked_out').length})</span>
-            </button>
-          </div>
-
-          {(onOpenExcelModal || onOpenExportExcel) && (
-            <div className="flex items-center gap-1.5">
-              {onOpenExcelModal && (
-                <button
-                  type="button"
-                  id="table-bulk-excel-btn"
-                  onClick={onOpenExcelModal}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
-                  title="إيداع فواصل متعددة من ملف Excel"
-                >
-                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-                  <span className="hidden sm:inline">إيداع إكسل</span>
-                </button>
-              )}
-              {onOpenExportExcel && (
-                <button
-                  type="button"
-                  id="table-export-excel-btn"
-                  onClick={onOpenExportExcel}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
-                  title="تصدير السجل إلى ملف Excel"
-                >
-                  <Download className="w-3.5 h-3.5 text-emerald-700" />
-                  <span className="hidden sm:inline">تصدير</span>
-                </button>
-              )}
-            </div>
-          )}
+        {/* Status Filter Badges (Clean Segmented Control) */}
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold border border-slate-200/80">
+          <button
+            type="button"
+            onClick={() => { setStatusFilter('all'); setCurrentPage(1); }}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              statusFilter === 'all' 
+                ? 'bg-white text-slate-900 shadow-2xs font-extrabold' 
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            الكل ({separators.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => { setStatusFilter('available'); setCurrentPage(1); }}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              statusFilter === 'available' 
+                ? 'bg-white text-emerald-800 shadow-2xs font-extrabold' 
+                : 'text-emerald-700 hover:bg-emerald-50/60'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>متاح ({separators.filter(s => s.status === 'available').length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => { setStatusFilter('checked_out'); setCurrentPage(1); }}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              statusFilter === 'checked_out' 
+                ? 'bg-white text-amber-800 shadow-2xs font-extrabold' 
+                : 'text-amber-700 hover:bg-amber-50/60'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+            <span>معار ({separators.filter(s => s.status === 'checked_out').length})</span>
+          </button>
         </div>
 
       </div>
@@ -173,35 +142,38 @@ export default function DocumentsTable({
             return (
               <div key={sep.id} className="p-4 hover:bg-slate-50 transition-colors">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2">
+                  <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-xl bg-slate-100/90 border border-slate-200/90 text-slate-800 text-xs font-bold font-mono shadow-2xs">
                     <span 
-                      className="w-3 h-3 rounded-full shrink-0" 
+                      className="w-2.5 h-2.5 rounded-full shrink-0 shadow-2xs" 
                       style={{ backgroundColor: sep.color || '#38bdf8' }}
                     />
-                    <span className="font-mono font-bold text-xs bg-slate-900 text-white px-2 py-0.5 rounded shadow-2xs">
-                      {sep.code}
-                    </span>
+                    <span>{sep.code}</span>
                   </div>
 
                   {/* Status Toggle Button */}
                   <button
                     type="button"
                     onClick={() => onToggleStatus(sep)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold border transition-colors cursor-pointer active:scale-95 ${
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold border transition-colors cursor-pointer active:scale-95 ${
                       isAvailable
                         ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                         : 'bg-amber-50 text-amber-800 border-amber-200'
                     }`}
                   >
-                    <span className={`w-1.5 h-1.5 rounded-full ${isAvailable ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-                    <span>{isAvailable ? '🟢 متاح' : '🟡 مستعار'}</span>
+                    <span className={`w-2 h-2 rounded-full ${isAvailable ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                    <span>{isAvailable ? 'متاح بالخزانة' : 'معار ميدانياً'}</span>
                   </button>
                 </div>
 
-                <div className="mt-2.5">
-                  <h4 className="text-sm font-bold text-slate-900">
+                <div className="mt-3">
+                  <h4 className="text-sm font-bold text-slate-900 leading-snug">
                     {sep.name}
                   </h4>
+                  {sep.client && sep.client !== 'عام' && (
+                    <div className="text-xs font-semibold text-slate-600 mt-1">
+                      الجهة: {sep.client}
+                    </div>
+                  )}
                   {sep.description && (
                     <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">
                       {sep.description}
@@ -209,16 +181,15 @@ export default function DocumentsTable({
                   )}
                 </div>
 
-                <div className="mt-2.5 flex flex-wrap items-center gap-2 text-xs">
-                  <span className="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                  <span className="font-bold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
                     {sep.binderName || sep.binderCode}
                   </span>
 
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-50 text-blue-800 font-bold border border-blue-200">
-                    <MapPin className="w-3 h-3 text-blue-600" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-800 font-bold border border-blue-200">
+                    <MapPin className="w-3.5 h-3.5 text-blue-600" />
                     <span>{sep.location || 'الخزانة الرئيسية'}</span>
                   </span>
-
                 </div>
 
                 {/* Mobile Quick Action Buttons */}
@@ -227,7 +198,7 @@ export default function DocumentsTable({
                     <button
                       type="button"
                       onClick={() => onOpenEditSeparationModal && onOpenEditSeparationModal(sep)}
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition-colors cursor-pointer"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                       <span>تعديل</span>
@@ -236,7 +207,7 @@ export default function DocumentsTable({
                     <button
                       type="button"
                       onClick={() => onOpenQRModal(sep)}
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
                     >
                       <QrCode className="w-3.5 h-3.5 text-blue-600" />
                       <span>كود</span>
@@ -245,7 +216,7 @@ export default function DocumentsTable({
                     <button
                       type="button"
                       onClick={() => onOpenPrintModal(sep)}
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
                     >
                       <Printer className="w-3.5 h-3.5" />
                       <span>طباعة</span>
@@ -296,62 +267,72 @@ export default function DocumentsTable({
                     className="hover:bg-slate-50/80 transition-colors group"
                   >
                     {/* Code */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
+                    <td className="py-4 px-4 whitespace-nowrap">
+                      <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-xl bg-slate-100/90 hover:bg-slate-200/80 border border-slate-200/90 text-slate-800 text-xs font-bold font-mono transition-colors shadow-2xs">
                         <span 
-                          className="w-2.5 h-2.5 rounded-full shrink-0" 
+                          className="w-2.5 h-2.5 rounded-full shrink-0 shadow-2xs" 
                           style={{ backgroundColor: sep.color || '#38bdf8' }}
                         />
-                        <span className="font-mono font-bold text-xs bg-slate-900 text-white px-2 py-0.5 rounded shadow-2xs">
-                          {sep.code}
-                        </span>
+                        <span>{sep.code}</span>
                       </div>
                     </td>
 
                     {/* Title */}
-                    <td className="py-3.5 px-4">
+                    <td className="py-4 px-4">
                       <div className="text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
                         {sep.name}
                       </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        {sep.client && sep.client !== 'عام' && (
+                          <span className="text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+                            الجهة: {sep.client}
+                          </span>
+                        )}
+                        {sep.date && (
+                          <span className="text-[11px] text-slate-400 font-mono">
+                            {sep.date}
+                          </span>
+                        )}
+                      </div>
                       {sep.description && (
-                        <div className="text-xs text-slate-500 mt-0.5 line-clamp-1">
+                        <div className="text-xs text-slate-500 mt-1 line-clamp-1">
                           {sep.description}
                         </div>
                       )}
                     </td>
 
                     {/* Binder & Chapter */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
+                    <td className="py-4 px-4 whitespace-nowrap">
                       <div className="text-xs font-bold text-slate-800">
                         {sep.binderName || sep.binderCode}
                       </div>
-                      <div className="text-[11px] text-slate-500 font-medium">
+                      <div className="text-[11px] text-slate-500 font-medium mt-0.5">
                         {sep.chapterName || 'عام'} ({sep.chapterCode || 'SEC'})
                       </div>
                     </td>
 
                     {/* Location */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 text-xs font-bold border border-slate-200">
+                    <td className="py-4 px-4 whitespace-nowrap">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 text-slate-700 text-xs font-bold border border-slate-200/80">
                         <MapPin className="w-3.5 h-3.5 text-blue-600" />
                         <span>{sep.location || `${sep.cabinet || 'الخزانة الرئيسية'} - ${sep.shelf || 'رف 1'}`}</span>
                       </div>
                     </td>
 
                     {/* Status */}
-                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                    <td className="py-4 px-4 text-center whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => onToggleStatus(sep)}
                         title="انقر لتسجيل الإعارة أو الاسترداد"
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-bold border transition-colors cursor-pointer ${
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-2xs active:scale-95 ${
                           isAvailable
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
-                            : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200/90 hover:bg-emerald-100'
+                            : 'bg-amber-50 text-amber-800 border-amber-200/90 hover:bg-amber-100'
                         }`}
                       >
-                        <span className={`w-1.5 h-1.5 rounded-full ${isAvailable ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-                        <span>{isAvailable ? '🟢 متاح' : '🟡 مستعار'}</span>
+                        <span className={`w-2 h-2 rounded-full ${isAvailable ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></span>
+                        <span>{isAvailable ? 'متاح بالخزانة' : 'معار ميدانياً'}</span>
                       </button>
                       
                       {!isAvailable && sep.borrower && (
@@ -362,42 +343,42 @@ export default function DocumentsTable({
                     </td>
 
                     {/* Actions */}
-                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                      <div className="flex items-center justify-center gap-1.5">
+                    <td className="py-4 px-4 text-center whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-1 bg-slate-50/70 p-1 rounded-xl border border-slate-100 w-fit mx-auto">
                         <button
                           type="button"
                           onClick={() => onOpenEditSeparationModal && onOpenEditSeparationModal(sep)}
                           title="تعديل بيانات الفاصل"
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-white hover:shadow-2xs transition-all cursor-pointer"
                         >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => onOpenQRModal(sep)}
-                          title="عرض رمز QR الفاصل"
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
-                        >
-                          <QrCode className="w-4 h-4" />
+                          <Pencil className="w-3.5 h-3.5" />
                         </button>
 
                         <button
                           type="button"
                           onClick={() => onOpenPrintModal(sep)}
                           title="طباعة ملصق تبويب الفاصل"
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-white hover:shadow-2xs transition-all cursor-pointer"
                         >
-                          <Printer className="w-4 h-4" />
+                          <Printer className="w-3.5 h-3.5" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => onOpenQRModal(sep)}
+                          title="عرض رمز QR الفاصل"
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-white hover:shadow-2xs transition-all cursor-pointer"
+                        >
+                          <QrCode className="w-3.5 h-3.5" />
                         </button>
 
                         <button
                           type="button"
                           onClick={() => onDeleteSeparator(sep.id)}
                           title="حذف الفاصل"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-white hover:shadow-2xs transition-all cursor-pointer"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </td>

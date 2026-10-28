@@ -464,91 +464,122 @@ export default function App() {
             <div className="space-y-5">
               
               {/* Executive Overview Header */}
-              <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200">
-                      شركة المستقبل • قسم الأرشفة
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200/80">
+                      قسم الأرشفة والوثائق • شركة المستقبل
                     </span>
                   </div>
-                  <h2 className="text-base sm:text-lg font-black text-slate-900 mt-1">
+                  <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 mt-2">
                     سجل الفواصل والأرشيف العام
                   </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1">
                     إدارة شاملة لجميع الفواصل الكرتونية المودعة في المجلدات مع تتبع حالات الإعارة الميدانية
                   </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
+                <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
                   <button
                     type="button"
                     onClick={() => {
                       setTargetBinderForSeparation(null);
                       setIsAddSeparationModalOpen(true);
                     }}
-                    className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 active:scale-95 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-95 text-white text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer"
                   >
-                    <Plus className="w-4 h-4" />
-                    <span>إضافة فاصل جديد</span>
+                    <Plus className="w-4 h-4 stroke-[2.5]" />
+                    <span>إضافة فاصل كرتوني</span>
                   </button>
 
                   <button
                     type="button"
                     id="dashboard-bulk-excel-btn"
                     onClick={() => handleOpenExcelModal('import')}
-                    className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+                    className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs sm:text-sm font-bold transition-all cursor-pointer active:scale-95"
                     title="إيداع فواصل متعددة دفعة واحدة من ملف إكسل"
                   >
-                    <FileSpreadsheet className="w-4 h-4 text-emerald-200" />
-                    <span>إيداع مجمع (Excel)</span>
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                    <span>إيداع إكسل</span>
                   </button>
 
                   <button
                     type="button"
                     id="dashboard-export-excel-btn"
                     onClick={() => handleOpenExcelModal('export')}
-                    className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-lg bg-white hover:bg-slate-100 active:scale-95 text-slate-700 text-xs font-bold border border-slate-200 shadow-2xs transition-all cursor-pointer"
-                    title="تصدير نسخة احتياطية كاملة من الأرشيف إلى ملف Excel"
+                    className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs sm:text-sm font-bold transition-all cursor-pointer active:scale-95"
+                    title="تصدير نسخة احتياطية كاملة من الأرشيف"
                   >
-                    <Download className="w-4 h-4 text-emerald-700" />
-                    <span className="hidden sm:inline">تصدير إكسل</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleOpenQRModal()}
-                    className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
-                  >
-                    <QrCode className="w-4 h-4" />
-                    <span>مسح كود</span>
+                    <Download className="w-4 h-4 text-slate-500" />
+                    <span>تصدير الأرشيف</span>
                   </button>
                 </div>
               </div>
 
-              {/* Metrics Row */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
-                <div className="bg-white p-3 sm:p-3.5 rounded-lg border border-slate-200 shadow-2xs">
-                  <div className="text-[11px] font-semibold text-slate-500">إجمالي الفواصل الكرتونية</div>
-                  <div className="text-lg sm:text-xl font-black text-slate-900 mt-1 font-mono">{totalSeparators}</div>
-                  <div className="text-[10px] text-blue-700 font-bold mt-0.5">مودعة في المجلدات</div>
+              {/* Redesigned Executive KPI Metrics */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                {/* Total Separators */}
+                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500">إجمالي الفواصل الكرتونية</span>
+                    <span className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                      <Layers className="w-4 h-4" />
+                    </span>
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-black text-slate-900 mt-2 font-mono tracking-tight">
+                    {totalSeparators}
+                  </div>
+                  <div className="text-xs font-semibold text-blue-700 mt-1 flex items-center gap-1">
+                    <span>مودعة داخل المجلدات</span>
+                  </div>
                 </div>
 
-                <div className="bg-white p-3 sm:p-3.5 rounded-lg border border-slate-200 shadow-2xs">
-                  <div className="text-[11px] font-semibold text-slate-500">المجلدات الفيزيائية النشطة</div>
-                  <div className="text-lg sm:text-xl font-black text-slate-900 mt-1 font-mono">{binders.length}</div>
-                  <div className="text-[10px] text-slate-500 font-medium mt-0.5">موزعة على الأرفف</div>
+                {/* Active Binders */}
+                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500">المجلدات الفيزيائية النشطة</span>
+                    <span className="w-8 h-8 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
+                      <FolderArchive className="w-4 h-4" />
+                    </span>
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-black text-slate-900 mt-2 font-mono tracking-tight">
+                    {binders.length}
+                  </div>
+                  <div className="text-xs font-medium text-slate-500 mt-1">
+                    موزعة على الخزائن والأرفف
+                  </div>
                 </div>
 
-                <div className="bg-white p-3 sm:p-3.5 rounded-lg border border-slate-200 shadow-2xs">
-                  <div className="text-[11px] font-semibold text-emerald-700">الفواصل المتاحة بالخزائن</div>
-                  <div className="text-lg sm:text-xl font-black text-emerald-700 mt-1 font-mono">{availableCount}</div>
-                  <div className="text-[10px] text-emerald-600 font-bold mt-0.5">جاهزة للمطالعة</div>
+                {/* Available */}
+                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-emerald-800">الفواصل المتاحة للحفظ</span>
+                    <span className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></span>
+                    </span>
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-black text-emerald-700 mt-2 font-mono tracking-tight">
+                    {availableCount}
+                  </div>
+                  <div className="text-xs font-semibold text-emerald-600 mt-1">
+                    جاهزة داخل المجلد بالمقر
+                  </div>
                 </div>
 
-                <div className="bg-white p-3 sm:p-3.5 rounded-lg border border-slate-200 shadow-2xs">
-                  <div className="text-[11px] font-semibold text-amber-800">الفواصل المستعارة ميدانياً</div>
-                  <div className="text-lg sm:text-xl font-black text-amber-700 mt-1 font-mono">{checkedOutCount}</div>
-                  <div className="text-[10px] text-amber-800 font-bold mt-0.5">قيد المراجعة</div>
+                {/* Checked Out */}
+                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-amber-800">فواصل معارة ميدانياً</span>
+                    <span className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-xs">
+                      {checkedOutCount > 0 ? '!' : '✓'}
+                    </span>
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-black text-amber-700 mt-2 font-mono tracking-tight">
+                    {checkedOutCount}
+                  </div>
+                  <div className="text-xs font-semibold text-amber-800 mt-1">
+                    {checkedOutCount > 0 ? 'قيد المراجعة والمتابعة' : 'لا توجد إعارات حالياً'}
+                  </div>
                 </div>
               </div>
 

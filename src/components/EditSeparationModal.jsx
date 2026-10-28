@@ -109,14 +109,14 @@ export default function EditSeparationModal({
           {/* Separator Name */}
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              عنوان الفاصل / موضوع الأوراق <span className="text-red-500">*</span>
+              عنوان الفاصل / موضوع الفاصل <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               value={name}
               onChange={(e) => { setName(e.target.value); setError(''); }}
               placeholder="مثال: عقود التوريد 2024، تقارير الفحص الفني..."
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-hidden font-bold text-slate-900"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-hidden font-bold text-slate-900 shadow-2xs"
               required
             />
           </div>
@@ -129,7 +129,7 @@ export default function EditSeparationModal({
             <select
               value={selectedBinderId}
               onChange={(e) => setSelectedBinderId(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-slate-900 bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-hidden"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-slate-900 bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-hidden shadow-2xs"
             >
               {binders.map((b) => (
                 <option key={b.id} value={b.id}>
@@ -140,7 +140,7 @@ export default function EditSeparationModal({
           </div>
 
           {/* Client & Date Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
                 الجهة / العميل المستفيد
@@ -150,7 +150,7 @@ export default function EditSeparationModal({
                 value={client}
                 onChange={(e) => setClient(e.target.value)}
                 placeholder="عام"
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs text-slate-900 font-bold"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs text-slate-900 font-bold focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-hidden shadow-2xs"
               />
             </div>
 
@@ -163,7 +163,7 @@ export default function EditSeparationModal({
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 placeholder="YYYY/MM/DD"
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-mono font-bold text-slate-900"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-mono font-bold text-slate-900 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-hidden shadow-2xs"
               />
             </div>
           </div>
@@ -177,8 +177,8 @@ export default function EditSeparationModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
-              placeholder="ملاحظات حول الأوراق والوثائق داخل هذا الفاصل..."
-              className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs text-slate-800"
+              placeholder="ملاحظات حول الوثائق داخل هذا الفاصل..."
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs text-slate-900 font-medium focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-hidden shadow-2xs"
             />
           </div>
 

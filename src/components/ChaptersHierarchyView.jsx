@@ -401,7 +401,7 @@ export default function ChaptersHierarchyView({
                   <div>
                     {/* Code & Location */}
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-mono text-xs font-black bg-slate-900 text-white px-2.5 py-0.5 rounded shadow-2xs">
+                      <span className="font-mono text-xs font-bold bg-slate-100 text-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
                         {b.code}
                       </span>
                       <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 flex items-center gap-1">
@@ -791,7 +791,7 @@ export default function ChaptersHierarchyView({
                       <div>
                         {/* Header: Code & Date */}
                         <div className="flex items-center justify-between text-xs mb-2.5 pt-1">
-                          <span className="font-mono text-xs font-black bg-slate-900 text-white px-2.5 py-0.5 rounded shadow-2xs">
+                          <span className="font-mono text-xs font-bold bg-slate-100 text-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
                             {sep.code}
                           </span>
                           <span className="text-xs text-slate-500 font-mono">

@@ -136,7 +136,7 @@ export default function Navbar({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="ابحث بكود الفاصل، اسم المجلد، عنوان الموضوع..."
-              className="w-full pl-10 pr-9 py-2 bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-xs sm:text-sm text-slate-800 placeholder-slate-400 rounded-lg border border-slate-200 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all outline-hidden"
+              className="w-full pl-10 pr-10 py-2.5 bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 rounded-xl border border-slate-200 focus:border-blue-600 focus:ring-3 focus:ring-blue-100 transition-all outline-hidden shadow-2xs font-medium"
             />
 
             {/* Mic Search */}
@@ -173,89 +173,62 @@ export default function Navbar({
           </div>
         </div>
 
-        {/* Left side: Install CTA + QR + Sync Status + User Profile */}
+        {/* Left side: Quick QR Scan + Cloud Sync Status + User Profile */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0 pwa-no-drag">
           
           {/* Mobile Search Toggle Icon */}
           <button
             type="button"
             onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
-            className="sm:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+            className="sm:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
             aria-label="البحث في الأرشيف"
           >
             <Search className="w-5 h-5" />
           </button>
 
-          {/* Quick QR Scan Button (Mobile & Desktop) */}
+          {/* Quick QR Scan Button */}
           {onOpenQRModal && (
             <button
               type="button"
               onClick={onOpenQRModal}
               title="مسح كود QR ميدانياً"
-              className="p-2 sm:px-3 sm:py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="p-2 sm:px-3 sm:py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95"
             >
               <QrCode className="w-4 h-4 text-blue-600" />
-              <span className="hidden md:inline">مسح كود</span>
+              <span className="hidden md:inline font-bold">مسح كود QR</span>
             </button>
           )}
 
-          {/* Excel Import / Export & Backup Button */}
-          {onOpenExcel && (
-            <button
-              type="button"
-              id="navbar-excel-btn"
-              onClick={onOpenExcel}
-              title="استيراد وتصدير إكسل ونسخ احتياطي كامل للأرشيف"
-              className="p-2 sm:px-3 sm:py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-2xs"
-            >
-              <FileSpreadsheet className="w-4 h-4 text-emerald-700" />
-              <span className="hidden xl:inline">إكسل ونسخ احتياطي</span>
-              <span className="hidden sm:inline xl:hidden">إكسل</span>
-            </button>
-          )}
-
-          {/* PWA Install Button (If not already installed in standalone mode) */}
-          {!isStandalone && onTriggerInstall && (
-            <button
-              type="button"
-              id="navbar-install-app-btn"
-              onClick={onTriggerInstall}
-              title="تثبيت التطبيق على جهازك (كمبيوتر أو هاتف)"
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-black shadow-2xs transition-all cursor-pointer active:scale-95"
-            >
-              <Download className="w-3.5 h-3.5 animate-bounce" />
-              <span className="hidden sm:inline">تثبيت التطبيق</span>
-              <span className="sm:hidden text-[11px]">تثبيت</span>
-            </button>
-          )}
-
-          {/* Cloud sync status tag (Clickable for True Offline Center) */}
+          {/* Cloud sync status tag */}
           <button
             type="button"
             id="navbar-sync-status-btn"
             onClick={onOpenOfflineModal}
             title="انقر لفتح مركز المزامنة وإدارة العمليات المعلقة"
-            className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold border transition-all cursor-pointer hover:shadow-xs active:scale-95 bg-white"
+            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200/80 transition-all cursor-pointer hover:shadow-2xs active:scale-95 bg-white"
           >
             {syncStatus === 'saving' ? (
-              <div className="flex items-center gap-1.5 text-amber-800 bg-amber-50 px-1 py-0.5 rounded">
+              <div className="flex items-center gap-1.5 text-amber-700">
                 <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
                 <span>جاري الحفظ...</span>
               </div>
             ) : syncStatus === 'offline' ? (
-              <div className="flex items-center gap-1.5 text-amber-900 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+              <div className="flex items-center gap-1.5 text-amber-700">
                 <WifiOff className="w-3.5 h-3.5 text-amber-600" />
-                <span>وضع الأوفلاين</span>
+                <span>أوفلاين</span>
                 {offlineQueueCount > 0 && (
-                  <span className="bg-amber-200 text-amber-950 px-1 rounded text-[10px] font-mono">
+                  <span className="bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded-md text-[10px] font-mono font-bold">
                     {offlineQueueCount}
                   </span>
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-1.5 text-emerald-800 bg-emerald-50/90 px-1.5 py-0.5 rounded border border-emerald-200">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_#10b981]"></span>
-                <span>Firebase متصل</span>
+              <div className="flex items-center gap-2 text-slate-700">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-[11px] font-semibold text-slate-600">متصل بالسحابة</span>
               </div>
             )}
           </button>
