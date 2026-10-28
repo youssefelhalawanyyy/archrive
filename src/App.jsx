@@ -17,6 +17,7 @@ import CheckoutModal from './components/CheckoutModal';
 import QRModal from './components/QRModal';
 import SpineLabelModal from './components/SpineLabelModal';
 import ExcelImportExportModal from './components/ExcelImportExportModal';
+import OfflineSyncModal from './components/OfflineSyncModal';
 import BindersView from './components/BindersView';
 import ReportsView from './components/ReportsView';
 
@@ -41,6 +42,8 @@ import {
   getAuditLogs,
   subscribeToAuditLogs,
   subscribeToSyncStatus,
+  getOfflineQueue,
+  subscribeToOfflineQueue,
 } from './services/firebase';
 
 export default function App() {
@@ -88,10 +91,18 @@ export default function App() {
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
+  const [isOfflineModalOpen, setIsOfflineModalOpen] = useState(false);
+  const [offlineQueue, setOfflineQueue] = useState(getOfflineQueue());
   const [excelModalInitialTab, setExcelModalInitialTab] = useState('import'); // 'import' | 'export'
   const [targetCheckoutItem, setTargetCheckoutItem] = useState(null);
   const [targetQRItem, setTargetQRItem] = useState(null);
   const [targetPrintItem, setTargetPrintItem] = useState(null);
+
+  // Subscribe to offline queue changes
+  useEffect(() => {
+    const unsub = subscribeToOfflineQueue((q) => setOfflineQueue(q));
+    return () => unsub();
+  }, []);
 
   // Read URL query params on launch for PWA shortcuts
   useEffect(() => {
@@ -311,11 +322,13 @@ export default function App() {
         setSearchQuery={setSearchQuery}
         docsCount={totalSeparators}
         syncStatus={syncStatus}
+        offlineQueueCount={offlineQueue.length}
         onToggleMobileMenu={() => setIsMobileDrawerOpen(!isMobileDrawerOpen)}
         onTriggerInstall={() => setIsInstallTriggered(true)}
         onOpenQRModal={() => handleOpenQRModal()}
         onOpenExcel={() => handleOpenExcelModal('import')}
         onOpenExportExcel={() => handleOpenExcelModal('export')}
+        onOpenOfflineModal={() => setIsOfflineModalOpen(true)}
       />
 
       {/* Main Workspace: Sidebar (Right) + Content Area (Left) */}
@@ -331,6 +344,7 @@ export default function App() {
           }}
           onOpenExcel={() => handleOpenExcelModal('import')}
           onOpenExportExcel={() => handleOpenExcelModal('export')}
+          onOpenOfflineModal={() => setIsOfflineModalOpen(true)}
           stats={{
             totalDocs: totalSeparators,
             checkedOutCount,
@@ -504,11 +518,13 @@ export default function App() {
             />
           )}
 
-          {/* TAB 4: Checkout & Audit Reports */}
+          {/* TAB 4: Executive BI Analytics & Audit Reports */}
           {currentTab === 'reports' && (
             <ReportsView
               auditLogs={auditLogs}
               separators={separators}
+              chapters={chapters}
+              binders={binders}
               onToggleStatus={handleOpenStatusToggle}
             />
           )}
@@ -639,6 +655,12 @@ export default function App() {
         auditLogs={auditLogs}
         initialTab={excelModalInitialTab}
         onBulkDeposit={handleBulkDeposit}
+      />
+
+      {/* True Offline Center & Mutation Queue Modal */}
+      <OfflineSyncModal
+        isOpen={isOfflineModalOpen}
+        onClose={() => setIsOfflineModalOpen(false)}
       />
 
     </div>

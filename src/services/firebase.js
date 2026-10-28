@@ -39,14 +39,25 @@ try {
   console.warn("Firebase initialization warning (using local fallback):", err);
 }
 
+import { 
+  enqueueOfflineAction, 
+  dequeueOfflineAction, 
+  clearOfflineQueue, 
+  getOfflineQueue, 
+  getIsOnline, 
+  subscribeToNetworkStatus, 
+  subscribeToOfflineQueue,
+  registerOfflineSyncHandler 
+} from "./offlineSyncService";
+
 // LocalStorage Keys (Local fallback & instant render)
 const STORAGE_CHAPTERS = "archive_chapters_v6";
 const STORAGE_BINDERS = "archive_binders_v6";
 const STORAGE_SEPARATORS = "archive_separators_v6";
 const STORAGE_LOGS = "archive_audit_logs_v6";
 
-// ================= SYNC STATUS MANAGEMENT =================
-let currentSyncStatus = isFirestoreAvailable ? "synced" : "offline"; // 'synced' | 'saving' | 'offline' | 'error'
+// ================= SYNC STATUS & OFFLINE QUEUE MANAGEMENT =================
+let currentSyncStatus = (isFirestoreAvailable && getIsOnline()) ? "synced" : "offline"; 
 const syncListeners = new Set();
 
 export const getSyncStatus = () => currentSyncStatus;
@@ -65,6 +76,95 @@ const notifySyncStatus = (status) => {
     } catch (e) {}
   });
 };
+
+/**
+ * Safely commit a write to Firestore or automatically queue it in LocalStorage if offline
+ */
+export const safeFirestoreWrite = async (entity, id, data, isDelete = false, description = "") => {
+  const online = getIsOnline() && isFirestoreAvailable && !!db;
+  if (!online) {
+    enqueueOfflineAction({
+      type: isDelete ? 'DELETE' : 'SET',
+      entity,
+      id,
+      payload: isDelete ? null : data,
+      description: description || (isDelete ? `حذف من ${entity}` : `حفظ في ${entity}`)
+    });
+    notifySyncStatus("offline");
+    return false;
+  }
+
+  try {
+    if (isDelete) {
+      await deleteDoc(doc(db, entity, id));
+    } else {
+      await setDoc(doc(db, entity, id), data, { merge: true });
+    }
+    const q = getOfflineQueue();
+    notifySyncStatus(q.length > 0 ? "offline" : "synced");
+    return true;
+  } catch (err) {
+    console.warn(`Firestore write deferred to offline queue for ${entity}/${id}:`, err);
+    enqueueOfflineAction({
+      type: isDelete ? 'DELETE' : 'SET',
+      entity,
+      id,
+      payload: isDelete ? null : data,
+      description: description || (isDelete ? `حذف من ${entity}` : `حفظ في ${entity}`)
+    });
+    notifySyncStatus("offline");
+    return false;
+  }
+};
+
+/**
+ * Flush all pending offline mutations to Firestore when back online
+ */
+export const flushOfflineQueue = async () => {
+  const queue = getOfflineQueue();
+  if (queue.length === 0) {
+    notifySyncStatus(getIsOnline() ? "synced" : "offline");
+    return { success: true, count: 0 };
+  }
+
+  if (!isFirestoreAvailable || !db || !getIsOnline()) {
+    notifySyncStatus("offline");
+    return { success: false, count: 0, reason: "الشبكة أو قاعدة البيانات غير متصلة" };
+  }
+
+  notifySyncStatus("saving");
+  let syncedCount = 0;
+  const remaining = [];
+
+  for (const item of queue) {
+    try {
+      if (item.type === 'DELETE') {
+        await deleteDoc(doc(db, item.entity, item.id));
+      } else {
+        await setDoc(doc(db, item.entity, item.id), item.payload, { merge: true });
+      }
+      syncedCount++;
+    } catch (e) {
+      console.warn("Failed syncing queue item:", item, e);
+      remaining.push(item);
+    }
+  }
+
+  if (remaining.length === 0) {
+    clearOfflineQueue();
+    notifySyncStatus("synced");
+  } else {
+    try {
+      localStorage.setItem('archive_offline_queue_v1', JSON.stringify(remaining));
+    } catch (e) {}
+    notifySyncStatus("offline");
+  }
+
+  return { success: remaining.length === 0, count: syncedCount, remainingCount: remaining.length };
+};
+
+// Register automatic sync handler on network reconnect
+registerOfflineSyncHandler(flushOfflineQueue);
 
 const getLocal = (key, fallback) => {
   try {
@@ -137,16 +237,7 @@ export const addChapter = async (newChapter) => {
   const updated = [...chapters, item];
   setLocal(STORAGE_CHAPTERS, updated);
 
-  if (db) {
-    try {
-      const cRef = doc(db, "chapters", chapterId);
-      await setDoc(cRef, item);
-      notifySyncStatus("synced");
-    } catch (e) {
-      console.error("Firestore addChapter error:", e);
-      notifySyncStatus("synced");
-    }
-  }
+  await safeFirestoreWrite("chapters", chapterId, item, false, `إضافة موضوع جديد: ${item.name}`);
 
   return updated;
 };
@@ -208,15 +299,7 @@ export const updateChapter = async (id, updatedFields) => {
     }
   }
 
-  if (db) {
-    try {
-      await setDoc(doc(db, "chapters", id), item, { merge: true });
-      notifySyncStatus("synced");
-    } catch (e) {
-      console.error("Firestore updateChapter error:", e);
-      notifySyncStatus("synced");
-    }
-  }
+  await safeFirestoreWrite("chapters", id, item, false, `تعديل موضوع: ${item.name}`);
 
   await addAuditLog({
     docId: id,
@@ -253,20 +336,13 @@ export const deleteChapter = async (id) => {
   const remainingSeps = seps.filter(s => s.chapterId !== id && !childBinderIds.has(s.binderId));
   setLocal(STORAGE_SEPARATORS, remainingSeps);
 
-  if (db) {
-    try {
-      await deleteDoc(doc(db, "chapters", id));
-      for (const b of childBinders) {
-        try { await deleteDoc(doc(db, "binders", b.id)); } catch (e) {}
-      }
-      for (const s of childSeps) {
-        try { await deleteDoc(doc(db, "separators", s.id)); } catch (e) {}
-      }
-      notifySyncStatus("synced");
-    } catch (e) {
-      console.error("Firestore deleteChapter error:", e);
-      notifySyncStatus("synced");
-    }
+  // Safe delete chapter & children
+  await safeFirestoreWrite("chapters", id, null, true, `حذف موضوع: ${target.name}`);
+  for (const b of childBinders) {
+    await safeFirestoreWrite("binders", b.id, null, true, `حذف مجلد تابع: ${b.name}`);
+  }
+  for (const s of childSeps) {
+    await safeFirestoreWrite("separators", s.id, null, true, `حذف فاصل تابع: ${s.name}`);
   }
 
   await addAuditLog({
@@ -401,22 +477,11 @@ export const addBinder = async (newBinder) => {
   );
   setLocal(STORAGE_CHAPTERS, updatedChapters);
 
-  if (db) {
-    try {
-      const bRef = doc(db, "binders", binderId);
-      await setDoc(bRef, item);
-
-      // Update chapter in Firestore
-      if (newBinder.chapterId) {
-        const cTarget = updatedChapters.find(c => c.id === newBinder.chapterId);
-        if (cTarget) {
-          await setDoc(doc(db, "chapters", newBinder.chapterId), cTarget, { merge: true });
-        }
-      }
-      notifySyncStatus("synced");
-    } catch (e) {
-      console.error("Firestore addBinder error:", e);
-      notifySyncStatus("synced");
+  await safeFirestoreWrite("binders", binderId, item, false, `إضافة مجلد: ${item.name}`);
+  if (newBinder.chapterId) {
+    const cTarget = updatedChapters.find(c => c.id === newBinder.chapterId);
+    if (cTarget) {
+      await safeFirestoreWrite("chapters", newBinder.chapterId, cTarget, false, `تحديث عدد مجلدات الموضوع`);
     }
   }
 
@@ -460,10 +525,8 @@ export const updateBinder = async (id, updatedFields) => {
     });
     setLocal(STORAGE_SEPARATORS, updatedSeps);
 
-    if (db) {
-      for (const s of updatedSeps.filter(s => s.binderId === id)) {
-        try { await setDoc(doc(db, "separators", s.id), s, { merge: true }); } catch (e) {}
-      }
+    for (const s of updatedSeps.filter(s => s.binderId === id)) {
+      await safeFirestoreWrite("separators", s.id, s, false, `تحديث فاصل تابع للمجلد`);
     }
   }
 
@@ -480,25 +543,14 @@ export const updateBinder = async (id, updatedFields) => {
       return c;
     });
     setLocal(STORAGE_CHAPTERS, updatedChapters);
-    if (db) {
-      try {
-        const oldC = updatedChapters.find(c => c.id === existing.chapterId);
-        const newC = updatedChapters.find(c => c.id === updatedFields.chapterId);
-        if (oldC) await setDoc(doc(db, "chapters", oldC.id), oldC, { merge: true });
-        if (newC) await setDoc(doc(db, "chapters", newC.id), newC, { merge: true });
-      } catch (e) {}
-    }
+    
+    const oldC = updatedChapters.find(c => c.id === existing.chapterId);
+    const newC = updatedChapters.find(c => c.id === updatedFields.chapterId);
+    if (oldC) await safeFirestoreWrite("chapters", oldC.id, oldC, false, `تحديث سعة موضوع قديم`);
+    if (newC) await safeFirestoreWrite("chapters", newC.id, newC, false, `تحديث سعة موضوع جديد`);
   }
 
-  if (db) {
-    try {
-      await setDoc(doc(db, "binders", id), item, { merge: true });
-      notifySyncStatus("synced");
-    } catch (e) {
-      console.error("Firestore updateBinder error:", e);
-      notifySyncStatus("synced");
-    }
-  }
+  await safeFirestoreWrite("binders", id, item, false, `تعديل بيانات مجلد: ${item.name}`);
 
   await addAuditLog({
     docId: id,
@@ -536,25 +588,13 @@ export const deleteBinder = async (id) => {
       c.id === target.chapterId ? { ...c, bindersCount: Math.max(0, (c.bindersCount || 1) - 1) } : c
     );
     setLocal(STORAGE_CHAPTERS, updatedChapters);
-    if (db) {
-      try {
-        const cTarget = updatedChapters.find(c => c.id === target.chapterId);
-        if (cTarget) await setDoc(doc(db, "chapters", target.chapterId), cTarget, { merge: true });
-      } catch (e) {}
-    }
+    const cTarget = updatedChapters.find(c => c.id === target.chapterId);
+    if (cTarget) await safeFirestoreWrite("chapters", target.chapterId, cTarget, false, `تحديث سعة موضوع`);
   }
 
-  if (db) {
-    try {
-      await deleteDoc(doc(db, "binders", id));
-      for (const s of childSeps) {
-        try { await deleteDoc(doc(db, "separators", s.id)); } catch (e) {}
-      }
-      notifySyncStatus("synced");
-    } catch (e) {
-      console.error("Firestore deleteBinder error:", e);
-      notifySyncStatus("synced");
-    }
+  await safeFirestoreWrite("binders", id, null, true, `حذف مجلد: ${target.name}`);
+  for (const s of childSeps) {
+    await safeFirestoreWrite("separators", s.id, null, true, `حذف فاصل تابع: ${s.name}`);
   }
 
   await addAuditLog({
@@ -648,22 +688,11 @@ export const addSeparator = async (newSeparator) => {
     reason: `إضافة فاصل في مجلد ${fullSep.binderName} (${fullSep.binderCode}) بموقع ${fullSep.location}`
   });
 
-  if (db) {
-    try {
-      const docRef = doc(db, "separators", sepId);
-      await setDoc(docRef, fullSep);
-
-      // Update binder in Firestore
-      if (fullSep.binderId) {
-        const bTarget = updatedBinders.find(b => b.id === fullSep.binderId);
-        if (bTarget) {
-          await setDoc(doc(db, "binders", fullSep.binderId), bTarget, { merge: true });
-        }
-      }
-      notifySyncStatus("synced");
-    } catch (e) {
-      console.error("Firestore addSeparator error:", e);
-      notifySyncStatus("synced");
+  await safeFirestoreWrite("separators", sepId, fullSep, false, `إيداع فاصل كرتوني: ${fullSep.name}`);
+  if (fullSep.binderId) {
+    const bTarget = updatedBinders.find(b => b.id === fullSep.binderId);
+    if (bTarget) {
+      await safeFirestoreWrite("binders", fullSep.binderId, bTarget, false, `تحديث سعة المجلد: ${bTarget.name}`);
     }
   }
 
@@ -747,25 +776,13 @@ export const bulkAddSeparators = async (items) => {
     reason: `تم إيداع عدد ${formattedNewSeps.length} فاصل كرتوني وتوزيعها على المجلدات عبر ملف إكسل`
   });
 
-  // Sync to Firestore
-  if (db) {
-    try {
-      for (const sep of formattedNewSeps) {
-        try {
-          await setDoc(doc(db, "separators", sep.id), sep);
-        } catch (e) {}
-      }
-      for (const b of updatedBinders) {
-        if (binderCounts[b.id] !== undefined) {
-          try {
-            await setDoc(doc(db, "binders", b.id), b, { merge: true });
-          } catch (e) {}
-        }
-      }
-      notifySyncStatus("synced");
-    } catch (e) {
-      console.error("Firestore bulkAddSeparators error:", e);
-      notifySyncStatus("synced");
+  // Safe batch write for bulk separators
+  for (const sep of formattedNewSeps) {
+    await safeFirestoreWrite("separators", sep.id, sep, false, `إيداع فاصل إكسل: ${sep.name}`);
+  }
+  for (const b of updatedBinders) {
+    if (binderCounts[b.id] !== undefined) {
+      await safeFirestoreWrite("binders", b.id, b, false, `تحديث سعة المجلد: ${b.name}`);
     }
   }
 
@@ -789,7 +806,8 @@ export const toggleSeparatorStatus = async (id, borrowerDetails = null) => {
     updatedAt: new Date().toISOString()
   };
 
-  const updatedSeps = seps.map(s => s.id === id ? { ...s, ...changes } : s);
+  const updatedTarget = { ...target, ...changes };
+  const updatedSeps = seps.map(s => s.id === id ? updatedTarget : s);
   setLocal(STORAGE_SEPARATORS, updatedSeps);
 
   await addAuditLog({
@@ -805,16 +823,13 @@ export const toggleSeparatorStatus = async (id, borrowerDetails = null) => {
       : "تم إعادة الفاصل ومحتوياته إلى المجلد بالخزانة"
   });
 
-  if (db) {
-    try {
-      const docRef = doc(db, "separators", id);
-      await updateDoc(docRef, changes);
-      notifySyncStatus("synced");
-    } catch (e) {
-      console.error("Firestore toggleSeparatorStatus error:", e);
-      notifySyncStatus("synced");
-    }
-  }
+  await safeFirestoreWrite(
+    "separators", 
+    id, 
+    updatedTarget, 
+    false, 
+    isCheckingOut ? `إعارة فاصل: ${target.name}` : `إرجاع فاصل: ${target.name}`
+  );
 
   return updatedSeps;
 };
@@ -865,25 +880,13 @@ export const updateSeparator = async (id, updatedFields) => {
     });
     setLocal(STORAGE_BINDERS, updatedBinders);
 
-    if (db) {
-      try {
-        const oldB = updatedBinders.find(b => b.id === existing.binderId);
-        const newB = updatedBinders.find(b => b.id === targetBinder.id);
-        if (oldB) await setDoc(doc(db, "binders", oldB.id), oldB, { merge: true });
-        if (newB) await setDoc(doc(db, "binders", newB.id), newB, { merge: true });
-      } catch (e) {}
-    }
+    const oldB = updatedBinders.find(b => b.id === existing.binderId);
+    const newB = updatedBinders.find(b => b.id === targetBinder.id);
+    if (oldB) await safeFirestoreWrite("binders", oldB.id, oldB, false, `تحديث سعة المجلد القديم`);
+    if (newB) await safeFirestoreWrite("binders", newB.id, newB, false, `تحديث سعة المجلد الجديد`);
   }
 
-  if (db) {
-    try {
-      await setDoc(doc(db, "separators", id), item, { merge: true });
-      notifySyncStatus("synced");
-    } catch (e) {
-      console.error("Firestore updateSeparator error:", e);
-      notifySyncStatus("synced");
-    }
-  }
+  await safeFirestoreWrite("separators", id, item, false, `تعديل فاصل كرتوني: ${item.name}`);
 
   await addAuditLog({
     docId: id,
@@ -913,26 +916,13 @@ export const deleteSeparator = async (id) => {
     );
     setLocal(STORAGE_BINDERS, updatedBinders);
 
-    if (db) {
-      try {
-        const bTarget = updatedBinders.find(b => b.id === target.binderId);
-        if (bTarget) {
-          await setDoc(doc(db, "binders", target.binderId), bTarget, { merge: true });
-        }
-      } catch (e) {}
+    const bTarget = updatedBinders.find(b => b.id === target.binderId);
+    if (bTarget) {
+      await safeFirestoreWrite("binders", target.binderId, bTarget, false, `تحديث سعة المجلد`);
     }
   }
 
-  if (db) {
-    try {
-      const docRef = doc(db, "separators", id);
-      await deleteDoc(docRef);
-      notifySyncStatus("synced");
-    } catch (e) {
-      console.error("Firestore deleteSeparator error:", e);
-      notifySyncStatus("synced");
-    }
-  }
+  await safeFirestoreWrite("separators", id, null, true, `حذف فاصل كرتوني: ${target?.name}`);
   return filtered;
 };
 
@@ -978,15 +968,15 @@ export const addAuditLog = async (logEntry) => {
   const updated = [entry, ...logs];
   setLocal(STORAGE_LOGS, updated);
 
-  if (db) {
-    try {
-      const lRef = doc(db, "audit_logs", entry.id);
-      await setDoc(lRef, entry);
-    } catch (e) {
-      console.error("Firestore addAuditLog error:", e);
-    }
-  }
+  await safeFirestoreWrite("audit_logs", entry.id, entry, false, `حركة تدقيق: ${entry.actionName}`);
   return updated;
 };
 
-export { app, db };
+export { 
+  app, 
+  db,
+  getOfflineQueue,
+  getIsOnline,
+  subscribeToNetworkStatus,
+  subscribeToOfflineQueue
+};

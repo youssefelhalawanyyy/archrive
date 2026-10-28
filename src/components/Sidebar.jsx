@@ -10,7 +10,9 @@ import {
   X,
   Archive,
   FileSpreadsheet,
-  Download
+  Download,
+  BarChart3,
+  Wifi
 } from 'lucide-react';
 
 export default function Sidebar({ 
@@ -19,6 +21,7 @@ export default function Sidebar({
   onOpenAddModal, 
   onOpenExcel,
   onOpenExportExcel,
+  onOpenOfflineModal,
   stats = { totalDocs: 0, checkedOutCount: 0, availableCount: 0, bindersCount: 5, chaptersCount: 5 },
   isOpenMobile = false,
   onCloseMobile = null
@@ -47,11 +50,11 @@ export default function Sidebar({
     },
     {
       id: 'reports',
-      label: 'تقارير الإعارة',
-      icon: FileText,
-      badge: stats.checkedOutCount > 0 ? `${stats.checkedOutCount} مستعار` : null,
-      badgeStyle: 'bg-amber-50 text-amber-800 border-amber-200',
-      description: 'سجل الإعارة والتدقيق'
+      label: 'التحليلات والتقارير التنفيذية',
+      icon: BarChart3,
+      badge: stats.checkedOutCount > 0 ? `${stats.checkedOutCount} مستعار` : 'BI',
+      badgeStyle: stats.checkedOutCount > 0 ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-blue-50 text-blue-800 border-blue-200',
+      description: 'مؤشرات الأداء BI وسجل التدقيق'
     }
   ];
 
@@ -176,9 +179,15 @@ export default function Sidebar({
               <Boxes className="w-4 h-4 text-blue-600" />
               حالة الأرشيف الميداني
             </span>
-            <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-              محدث
-            </span>
+            <button
+              type="button"
+              onClick={onOpenOfflineModal}
+              title="انقر لفحص المزامنة وحالة العمل أوفلاين في باطن الأرض"
+              className="text-[11px] font-bold text-slate-700 hover:text-blue-700 bg-slate-100 hover:bg-blue-50 px-2 py-0.5 rounded border border-slate-200 transition-colors cursor-pointer flex items-center gap-1"
+            >
+              <Wifi className="w-3 h-3 text-emerald-600" />
+              <span>مزامنة الأرشيف</span>
+            </button>
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-center">

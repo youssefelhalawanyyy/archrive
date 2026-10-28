@@ -9,7 +9,9 @@ import {
   Menu,
   Sparkles,
   QrCode,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 
 export default function Navbar({ 
@@ -17,11 +19,13 @@ export default function Navbar({
   setSearchQuery, 
   docsCount = 0,
   syncStatus = 'synced',
+  offlineQueueCount = 0,
   onToggleMobileMenu,
   onTriggerInstall,
   onOpenQRModal,
   onOpenExcel,
-  onOpenExportExcel
+  onOpenExportExcel,
+  onOpenOfflineModal
 }) {
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
@@ -201,25 +205,36 @@ export default function Navbar({
             </button>
           )}
 
-          {/* Cloud sync status tag */}
-          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium border transition-all">
+          {/* Cloud sync status tag (Clickable for True Offline Center) */}
+          <button
+            type="button"
+            id="navbar-sync-status-btn"
+            onClick={onOpenOfflineModal}
+            title="انقر لفتح مركز المزامنة وإدارة العمليات المعلقة"
+            className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold border transition-all cursor-pointer hover:shadow-xs active:scale-95 bg-white"
+          >
             {syncStatus === 'saving' ? (
-              <div className="flex items-center gap-1.5 text-amber-800 bg-amber-50">
+              <div className="flex items-center gap-1.5 text-amber-800 bg-amber-50 px-1 py-0.5 rounded">
                 <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-                <span className="font-bold">جاري الحفظ...</span>
+                <span>جاري الحفظ...</span>
               </div>
             ) : syncStatus === 'offline' ? (
-              <div className="flex items-center gap-1.5 text-slate-600 bg-slate-100">
-                <span className="w-2 h-2 rounded-full bg-slate-400"></span>
-                <span>أوفلاين</span>
+              <div className="flex items-center gap-1.5 text-amber-900 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                <WifiOff className="w-3.5 h-3.5 text-amber-600" />
+                <span>وضع الأوفلاين</span>
+                {offlineQueueCount > 0 && (
+                  <span className="bg-amber-200 text-amber-950 px-1 rounded text-[10px] font-mono">
+                    {offlineQueueCount}
+                  </span>
+                )}
               </div>
             ) : (
-              <div className="flex items-center gap-1.5 text-emerald-800 bg-emerald-50/80">
+              <div className="flex items-center gap-1.5 text-emerald-800 bg-emerald-50/90 px-1.5 py-0.5 rounded border border-emerald-200">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_#10b981]"></span>
-                <span className="font-bold">Firebase متصل</span>
+                <span>Firebase متصل</span>
               </div>
             )}
-          </div>
+          </button>
 
           <div className="h-5 w-px bg-slate-200 hidden sm:block"></div>
 
@@ -303,6 +318,25 @@ export default function Navbar({
                           <span>تصدير الأرشيف بالكامل</span>
                         </span>
                         <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">.xlsx</span>
+                      </button>
+                    )}
+                    {onOpenOfflineModal && (
+                      <button
+                        type="button"
+                        id="user-menu-offline-sync"
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          onOpenOfflineModal();
+                        }}
+                        className="w-full py-1.5 px-2.5 rounded-lg bg-slate-50 text-slate-800 text-xs font-bold flex items-center justify-between hover:bg-slate-100 transition-colors cursor-pointer border border-slate-200/60"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Wifi className="w-3.5 h-3.5 text-blue-600" />
+                          <span>مركز المزامنة والأوفلاين</span>
+                        </span>
+                        <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">
+                          {offlineQueueCount > 0 ? `${offlineQueueCount} معلق` : 'نشط'}
+                        </span>
                       </button>
                     )}
                   </div>
