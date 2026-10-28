@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, QrCode, Layers, CheckCircle2, Clock, Sparkles, FileSpreadsheet, Download } from 'lucide-react';
+import { Plus, QrCode, Layers, CheckCircle2, Clock, Sparkles, FileSpreadsheet, Download, Archive, Loader2 } from 'lucide-react';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import MobileBottomNav from './components/MobileBottomNav';
@@ -20,6 +20,7 @@ import ExcelImportExportModal from './components/ExcelImportExportModal';
 import OfflineSyncModal from './components/OfflineSyncModal';
 import BindersView from './components/BindersView';
 import ReportsView from './components/ReportsView';
+import LoginPage from './components/LoginPage';
 
 import { 
   getChapters,
@@ -44,6 +45,9 @@ import {
   subscribeToSyncStatus,
   getOfflineQueue,
   subscribeToOfflineQueue,
+  subscribeToAuth,
+  logoutUser,
+  getCachedAuthUser
 } from './services/firebase';
 
 export default function App() {
@@ -53,6 +57,10 @@ export default function App() {
   const [auditLogs, setAuditLogs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [syncStatus, setSyncStatus] = useState('synced');
+  
+  // Authentication State
+  const [currentUser, setCurrentUser] = useState(() => getCachedAuthUser());
+  const [authInitialized, setAuthInitialized] = useState(false);
   
   // Start with hierarchy view: Chapter -> Binder -> Separator
   const [currentTab, setCurrentTab] = useState('hierarchy'); 
@@ -103,6 +111,20 @@ export default function App() {
     const unsub = subscribeToOfflineQueue((q) => setOfflineQueue(q));
     return () => unsub();
   }, []);
+
+  // Subscribe to Firebase Auth state
+  useEffect(() => {
+    const unsubAuth = subscribeToAuth((user) => {
+      setCurrentUser(user);
+      setAuthInitialized(true);
+    });
+    return () => unsubAuth();
+  }, []);
+
+  const handleLogout = async () => {
+    await logoutUser();
+    setCurrentUser(null);
+  };
 
   // Read URL query params on launch for PWA shortcuts
   useEffect(() => {
@@ -313,6 +335,11 @@ export default function App() {
   const checkedOutCount = separators.filter(s => s.status === 'checked_out').length;
   const availableCount = totalSeparators - checkedOutCount;
 
+  // Gate app behind Login Page if no active session
+  if (!currentUser) {
+    return <LoginPage onLoginSuccess={(user) => setCurrentUser(user)} />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-cairo" dir="rtl">
       
@@ -323,6 +350,8 @@ export default function App() {
         docsCount={totalSeparators}
         syncStatus={syncStatus}
         offlineQueueCount={offlineQueue.length}
+        currentUser={currentUser}
+        onLogout={handleLogout}
         onToggleMobileMenu={() => setIsMobileDrawerOpen(!isMobileDrawerOpen)}
         onTriggerInstall={() => setIsInstallTriggered(true)}
         onOpenQRModal={() => handleOpenQRModal()}
@@ -338,6 +367,8 @@ export default function App() {
         <Sidebar
           currentTab={currentTab}
           setCurrentTab={setCurrentTab}
+          currentUser={currentUser}
+          onLogout={handleLogout}
           onOpenAddModal={() => {
             setTargetBinderForSeparation(null);
             setIsAddSeparationModalOpen(true);

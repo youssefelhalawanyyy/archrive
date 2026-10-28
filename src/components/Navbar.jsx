@@ -11,7 +11,8 @@ import {
   QrCode,
   FileSpreadsheet,
   Wifi,
-  WifiOff
+  WifiOff,
+  LogOut
 } from 'lucide-react';
 
 export default function Navbar({ 
@@ -25,7 +26,9 @@ export default function Navbar({
   onOpenQRModal,
   onOpenExcel,
   onOpenExportExcel,
-  onOpenOfflineModal
+  onOpenOfflineModal,
+  currentUser = null,
+  onLogout = null
 }) {
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
@@ -246,16 +249,16 @@ export default function Navbar({
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center gap-2 p-1 rounded-lg hover:bg-slate-100 transition-colors text-right cursor-pointer"
             >
-              <div className="w-8 h-8 rounded-lg bg-slate-800 text-white flex items-center justify-center font-bold text-xs shadow-2xs">
-                أ
+              <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow-2xs border border-slate-700">
+                {currentUser?.displayName ? currentUser.displayName[0] : (currentUser?.email ? currentUser.email[0].toUpperCase() : 'أ')}
               </div>
 
               <div className="hidden xl:block">
                 <div className="text-xs font-bold text-slate-900 leading-tight">
-                  أحمد الشريف
+                  {currentUser?.displayName || (currentUser?.email ? currentUser.email.split('@')[0] : 'أحمد الشريف')}
                 </div>
                 <div className="text-[10px] text-slate-500 font-medium">
-                  أمين الأرشيف
+                  {currentUser?.role || 'أمين الأرشيف الرئيسي'}
                 </div>
               </div>
 
@@ -264,13 +267,17 @@ export default function Navbar({
 
             {showUserMenu && (
               <div 
-                className="absolute left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 animate-in fade-in slide-in-from-top-1 font-cairo"
+                className="absolute left-0 mt-2 w-60 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 animate-in fade-in slide-in-from-top-1 font-cairo"
                 onClick={() => setShowUserMenu(false)}
               >
                 <div className="px-3.5 py-2 border-b border-slate-100">
-                  <p className="text-[11px] text-slate-400 font-medium">المستخدم الحالي</p>
-                  <p className="text-xs font-bold text-slate-900">أحمد الشريف</p>
-                  <p className="text-[10px] text-blue-600 font-semibold">شركة المستقبل • قسم التوثيق</p>
+                  <p className="text-[11px] text-slate-400 font-medium">المستخدم الإداري النشط</p>
+                  <p className="text-xs font-bold text-slate-900">
+                    {currentUser?.displayName || 'أحمد الشريف'}
+                  </p>
+                  <p className="text-[10px] text-blue-600 font-semibold font-mono truncate">
+                    {currentUser?.email || 'admin@archrive.com'}
+                  </p>
                 </div>
                 <div className="py-1 text-xs text-slate-600">
                   <div className="px-3.5 py-1.5 flex items-center justify-between">
@@ -352,6 +359,24 @@ export default function Navbar({
                       >
                         <Download className="w-3.5 h-3.5" />
                         <span>تثبيت التطبيق على الجهاز</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {onLogout && (
+                    <div className="p-2 border-t border-slate-100 mt-1">
+                      <button
+                        type="button"
+                        id="user-menu-logout-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowUserMenu(false);
+                          onLogout();
+                        }}
+                        className="w-full py-2 px-2.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-rose-200/70"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>تسجيل الخروج وإنهاء الجلسة</span>
                       </button>
                     </div>
                   )}

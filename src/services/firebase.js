@@ -12,6 +12,15 @@ import {
   orderBy
 } from "firebase/firestore";
 import { 
+  getAuth, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
+  signOut, 
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  updateProfile
+} from "firebase/auth";
+import { 
   initialChapters, 
   initialBinders, 
   initialSeparators, 
@@ -29,12 +38,16 @@ const firebaseConfig = {
 
 let app;
 let db;
+let auth;
 let isFirestoreAvailable = false;
+let isAuthAvailable = false;
 
 try {
   app = initializeApp(firebaseConfig);
   db = getFirestore(app);
   isFirestoreAvailable = true;
+  auth = getAuth(app);
+  isAuthAvailable = true;
 } catch (err) {
   console.warn("Firebase initialization warning (using local fallback):", err);
 }
@@ -972,9 +985,204 @@ export const addAuditLog = async (logEntry) => {
   return updated;
 };
 
+// ================= AUTHENTICATION SERVICES =================
+const STORAGE_AUTH_USER = "archive_auth_user_v1";
+
+export const getCachedAuthUser = () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_AUTH_USER);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+};
+
+export const setCachedAuthUser = (user) => {
+  try {
+    if (user) {
+      const minimalUser = {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName || "أحمد الشريف",
+        role: "مدير الأرشيف العام (Super Admin)",
+        lastLogin: new Date().toISOString()
+      };
+      localStorage.setItem(STORAGE_AUTH_USER, JSON.stringify(minimalUser));
+    } else {
+      localStorage.removeItem(STORAGE_AUTH_USER);
+    }
+  } catch (e) {
+    console.error("Cache auth user error:", e);
+  }
+};
+
+export const loginWithEmail = async (email, password) => {
+  const cleanEmail = (email || "").trim().toLowerCase();
+  const cleanPassword = (password || "").trim();
+
+  if (!cleanEmail || !cleanPassword) {
+    throw new Error("يرجى إدخال البريد الإلكتروني وكلمة المرور.");
+  }
+
+  // 1. If online and Firebase Auth is available, authenticate with Firebase
+  if (isAuthAvailable && auth && getIsOnline()) {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
+      const user = userCredential.user;
+      setCachedAuthUser(user);
+      
+      addAuditLog({
+        actionName: "تسجيل دخول إداري معتمد",
+        binderId: "-",
+        separatorCode: "-",
+        notes: `تم تسجيل الدخول بنجاح عبر الحساب الرئيسي: ${cleanEmail}`
+      }).catch(() => {});
+
+      return user;
+    } catch (firebaseErr) {
+      console.warn("Firebase signIn notice, code:", firebaseErr.code);
+      
+      // If user enters official main admin credentials and user doesn't exist yet,
+      // auto-provision it in Firebase Auth so the system is immediately functional!
+      if (
+        (firebaseErr.code === 'auth/user-not-found' || firebaseErr.code === 'auth/invalid-credential') &&
+        cleanEmail === 'admin@archrive.com' &&
+        cleanPassword === 'admin123456'
+      ) {
+        try {
+          const createCred = await createUserWithEmailAndPassword(auth, cleanEmail, cleanPassword);
+          if (createCred.user) {
+            try {
+              await updateProfile(createCred.user, { displayName: "أحمد الشريف" });
+            } catch (pErr) {}
+            setCachedAuthUser(createCred.user);
+            addAuditLog({
+              actionName: "إنشاء وتسجيل دخول الحساب الرئيسي",
+              binderId: "-",
+              separatorCode: "-",
+              notes: `تم تفعيل الحساب الرئيسي تلقائياً في Firebase: ${cleanEmail}`
+            }).catch(() => {});
+            return createCred.user;
+          }
+        } catch (createErr) {
+          console.warn("Auto-creation fallback notice:", createErr);
+        }
+      }
+
+      // Map Firebase Auth error codes to helpful Arabic messages
+      let arabicMessage = "بيانات الدخول غير صحيحة. يرجى التأكد من البريد وكلمة المرور.";
+      if (firebaseErr.code === 'auth/invalid-credential' || firebaseErr.code === 'auth/wrong-password' || firebaseErr.code === 'auth/user-not-found') {
+        arabicMessage = "البريد الإلكتروني أو كلمة المرور غير صحيحة. تأكد من إدخال بيانات الحساب الرئيسي المصرح به.";
+      } else if (firebaseErr.code === 'auth/too-many-requests') {
+        arabicMessage = "تم حظر محاولات الدخول مؤقتاً لتكرار كلمات المرور الخاطئة لحماية أمن الأرشيف. يرجى الانتظار دقيقة والمحاولة ثانية.";
+      } else if (firebaseErr.code === 'auth/network-request-failed') {
+        const cached = getCachedAuthUser();
+        if (cached && cached.email.toLowerCase() === cleanEmail && cleanPassword === 'admin123456') {
+          return cached;
+        }
+        arabicMessage = "تعذر الاتصال بخادم Firebase للمصادقة. يرجى التأكد من اتصال الإنترنت.";
+      } else if (firebaseErr.code === 'auth/invalid-email') {
+        arabicMessage = "صيغة البريد الإلكتروني غير صالحة. مثال: admin@archrive.com";
+      }
+      throw new Error(arabicMessage);
+    }
+  }
+
+  // 2. Offline fallback (e.g. inside bunker without internet connectivity)
+  const cached = getCachedAuthUser();
+  if (
+    (cleanEmail === 'admin@archrive.com' && cleanPassword === 'admin123456') ||
+    (cached && cached.email?.toLowerCase() === cleanEmail)
+  ) {
+    const offlineUser = cached || {
+      uid: 'admin-master-uid',
+      email: cleanEmail,
+      displayName: "أحمد الشريف",
+      role: "مدير الأرشيف العام (Super Admin)",
+      lastLogin: new Date().toISOString()
+    };
+    setCachedAuthUser(offlineUser);
+    return offlineUser;
+  }
+
+  throw new Error("بيانات الدخول غير صحيحة. يرجى التحقق من البريد وكلمة المرور.");
+};
+
+export const logoutUser = async () => {
+  try {
+    const currentUser = auth?.currentUser || getCachedAuthUser();
+    if (isAuthAvailable && auth) {
+      await signOut(auth);
+    }
+    setCachedAuthUser(null);
+    if (currentUser) {
+      addAuditLog({
+        actionName: "تسجيل خروج آمن",
+        binderId: "-",
+        separatorCode: "-",
+        notes: `قام المستخدم ${currentUser.email || 'المشرف'} بتسجيل الخروج وإنهاء الجلسة بأمان.`
+      }).catch(() => {});
+    }
+  } catch (e) {
+    console.warn("Logout error:", e);
+    setCachedAuthUser(null);
+  }
+};
+
+export const subscribeToAuth = (callback) => {
+  // Check cached user first for instant hydration
+  const cached = getCachedAuthUser();
+  if (cached) {
+    callback(cached);
+  }
+
+  if (!isAuthAvailable || !auth) {
+    if (!cached) callback(null);
+    return () => {};
+  }
+
+  try {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCachedAuthUser(user);
+        callback({
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName || "أحمد الشريف",
+          role: "مدير الأرشيف العام (Super Admin)"
+        });
+      } else {
+        // If Firebase says no user and we are online, clear local cache
+        if (getIsOnline()) {
+          setCachedAuthUser(null);
+          callback(null);
+        } else {
+          // If offline, keep cached user so archivist isn't interrupted in the basement
+          callback(cached);
+        }
+      }
+    });
+    return unsubscribe;
+  } catch (err) {
+    console.warn("onAuthStateChanged subscription error:", err);
+    return () => {};
+  }
+};
+
+export const sendResetPassword = async (email) => {
+  const cleanEmail = (email || "").trim().toLowerCase();
+  if (!cleanEmail) throw new Error("يرجى إدخال البريد الإلكتروني لإرسال رابط إعادة التعيين.");
+  if (isAuthAvailable && auth && getIsOnline()) {
+    await sendPasswordResetEmail(auth, cleanEmail);
+    return true;
+  }
+  throw new Error("خاصية إعادة تعيين كلمة المرور تتطلب اتصالاً مباشراً بالإنترنت.");
+};
+
 export { 
   app, 
   db,
+  auth,
   getOfflineQueue,
   getIsOnline,
   subscribeToNetworkStatus,

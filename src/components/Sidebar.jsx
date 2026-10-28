@@ -12,7 +12,8 @@ import {
   FileSpreadsheet,
   Download,
   BarChart3,
-  Wifi
+  Wifi,
+  LogOut
 } from 'lucide-react';
 
 export default function Sidebar({ 
@@ -24,7 +25,9 @@ export default function Sidebar({
   onOpenOfflineModal,
   stats = { totalDocs: 0, checkedOutCount: 0, availableCount: 0, bindersCount: 5, chaptersCount: 5 },
   isOpenMobile = false,
-  onCloseMobile = null
+  onCloseMobile = null,
+  currentUser = null,
+  onLogout = null
 }) {
   const menuItems = [
     {
@@ -205,6 +208,28 @@ export default function Sidebar({
             <span>شركة المستقبل</span>
             <span className="text-slate-800 font-bold">غرفة الأرشيف 102</span>
           </div>
+
+          {onLogout && (
+            <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <div className="w-5 h-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] font-bold shrink-0">
+                  {currentUser?.displayName ? currentUser.displayName[0] : (currentUser?.email ? currentUser.email[0].toUpperCase() : 'أ')}
+                </div>
+                <span className="text-[11px] font-bold text-slate-700 truncate max-w-[110px]" title={currentUser?.email || 'admin@archrive.com'}>
+                  {currentUser?.displayName || (currentUser?.email ? currentUser.email.split('@')[0] : 'أحمد الشريف')}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={onLogout}
+                title="تسجيل الخروج وإنهاء الجلسة"
+                className="text-[11px] text-rose-600 hover:text-rose-800 font-bold flex items-center gap-1 hover:bg-rose-50 px-1.5 py-0.5 rounded transition-colors cursor-pointer"
+              >
+                <LogOut className="w-3 h-3" />
+                <span>خروج</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </>
