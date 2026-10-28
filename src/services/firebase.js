@@ -82,10 +82,10 @@ import {
 } from "./offlineSyncService";
 
 // LocalStorage Keys (Local fallback & instant render)
-const STORAGE_CHAPTERS = "archive_chapters_v6";
-const STORAGE_BINDERS = "archive_binders_v6";
-const STORAGE_SEPARATORS = "archive_separators_v6";
-const STORAGE_LOGS = "archive_audit_logs_v6";
+const STORAGE_CHAPTERS = "archive_chapters_v7";
+const STORAGE_BINDERS = "archive_binders_v7";
+const STORAGE_SEPARATORS = "archive_separators_v7";
+const STORAGE_LOGS = "archive_audit_logs_v7";
 const STORAGE_QUOTA = "archive_quota_tracker_v1";
 
 // ================= FREE TIER QUOTA SENTINEL & USAGE TRACKER =================
@@ -334,6 +334,39 @@ export const flushOfflineQueue = async () => {
 // Register automatic sync handler on network reconnect
 registerOfflineSyncHandler(flushOfflineQueue);
 
+let isSyncingMaster = false;
+/**
+ * Synchronize full master enterprise dataset (Chapters, Binders, Separators) to Firestore in a single batch
+ */
+export const syncMasterDataToFirestore = async () => {
+  if (isSyncingMaster || !isFirestoreAvailable || !db || !getIsOnline()) {
+    return { success: false, reason: "الشبكة أو قاعدة البيانات السحابية غير متوفرة حالياً" };
+  }
+  isSyncingMaster = true;
+  notifySyncStatus("saving");
+
+  try {
+    const chapters = getChapters();
+    const binders = getBinders();
+    const separators = getSeparators();
+
+    const ops = [
+      ...chapters.map(c => ({ entity: "chapters", id: c.id, data: c, isDelete: false, description: `مزامنة موضوع: ${c.name}` })),
+      ...binders.map(b => ({ entity: "binders", id: b.id, data: b, isDelete: false, description: `مزامنة مجلد: ${b.name}` })),
+      ...separators.map(s => ({ entity: "separators", id: s.id, data: s, isDelete: false, description: `مزامنة فاصل: ${s.name}` }))
+    ];
+
+    await safeFirestoreBatchWrite(ops);
+    notifySyncStatus("synced");
+    return { success: true, count: ops.length };
+  } catch (err) {
+    console.warn("Failed syncing master real data to Firestore:", err);
+    return { success: false, error: err.message };
+  } finally {
+    isSyncingMaster = false;
+  }
+};
+
 const getLocal = (key, fallback) => {
   try {
     const val = localStorage.getItem(key);
@@ -341,7 +374,17 @@ const getLocal = (key, fallback) => {
       localStorage.setItem(key, JSON.stringify(fallback));
       return fallback;
     }
-    return JSON.parse(val);
+    const parsed = JSON.parse(val);
+    // If local cache has less items than master fallback, upgrade automatically
+    if (Array.isArray(parsed) && Array.isArray(fallback) && parsed.length < fallback.length) {
+      const mergedMap = new Map();
+      fallback.forEach(item => mergedMap.set(item.id, item));
+      parsed.forEach(item => mergedMap.set(item.id, item));
+      const full = Array.from(mergedMap.values());
+      localStorage.setItem(key, JSON.stringify(full));
+      return full;
+    }
+    return parsed;
   } catch (e) {
     return fallback;
   }
@@ -377,8 +420,13 @@ export const subscribeToChapters = (onUpdate, onError) => {
           id: d.id,
           ...d.data()
         }));
-        setLocal(STORAGE_CHAPTERS, remote);
-        onUpdate(remote);
+        const mergedMap = new Map();
+        initialChapters.forEach(c => mergedMap.set(c.id, c));
+        remote.forEach(c => mergedMap.set(c.id, c));
+        const fullChapters = Array.from(mergedMap.values());
+
+        setLocal(STORAGE_CHAPTERS, fullChapters);
+        onUpdate(fullChapters);
         notifySyncStatus("synced");
       }
     }, (error) => {
@@ -554,8 +602,13 @@ export const subscribeToBinders = (onUpdate, onError) => {
           id: d.id,
           ...d.data()
         }));
-        setLocal(STORAGE_BINDERS, remote);
-        onUpdate(remote);
+        const mergedMap = new Map();
+        initialBinders.forEach(b => mergedMap.set(b.id, b));
+        remote.forEach(b => mergedMap.set(b.id, b));
+        const fullBinders = Array.from(mergedMap.values());
+
+        setLocal(STORAGE_BINDERS, fullBinders);
+        onUpdate(fullBinders);
         notifySyncStatus("synced");
       }
     }, (error) => {
@@ -821,8 +874,13 @@ export const subscribeToSeparators = (onUpdate, onError) => {
           id: doc.id,
           ...doc.data()
         }));
-        setLocal(STORAGE_SEPARATORS, remoteSeps);
-        onUpdate(remoteSeps);
+        const mergedMap = new Map();
+        initialSeparators.forEach(s => mergedMap.set(s.id, s));
+        remoteSeps.forEach(s => mergedMap.set(s.id, s));
+        const fullSeps = Array.from(mergedMap.values());
+
+        setLocal(STORAGE_SEPARATORS, fullSeps);
+        onUpdate(fullSeps);
         notifySyncStatus("synced");
       }
     }, (error) => {
@@ -1143,8 +1201,13 @@ export const subscribeToAuditLogs = (onUpdate, onError) => {
           id: d.id,
           ...d.data()
         }));
-        setLocal(STORAGE_LOGS, remote);
-        onUpdate(remote);
+        const mergedMap = new Map();
+        initialAuditLogs.forEach(l => mergedMap.set(l.id, l));
+        remote.forEach(l => mergedMap.set(l.id, l));
+        const fullLogs = Array.from(mergedMap.values());
+
+        setLocal(STORAGE_LOGS, fullLogs);
+        onUpdate(fullLogs);
       }
     }, (error) => {
       console.warn("Audit logs snapshot warning:", error);

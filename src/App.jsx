@@ -48,14 +48,15 @@ import {
   subscribeToOfflineQueue,
   subscribeToAuth,
   logoutUser,
-  getCachedAuthUser
+  getCachedAuthUser,
+  syncMasterDataToFirestore
 } from './services/firebase';
 
 export default function App() {
-  const [chapters, setChapters] = useState([]);
-  const [binders, setBinders] = useState([]);
-  const [separators, setSeparators] = useState([]);
-  const [auditLogs, setAuditLogs] = useState([]);
+  const [chapters, setChapters] = useState(() => getChapters());
+  const [binders, setBinders] = useState(() => getBinders());
+  const [separators, setSeparators] = useState(() => getSeparators());
+  const [auditLogs, setAuditLogs] = useState(() => getAuditLogs());
   const [searchQuery, setSearchQuery] = useState('');
   const [syncStatus, setSyncStatus] = useState('synced');
   
@@ -202,6 +203,9 @@ export default function App() {
     const unsubSync = subscribeToSyncStatus((status) => {
       setSyncStatus(status);
     });
+
+    // Ensure Master Real Enterprise Data is synchronized to Firestore
+    syncMasterDataToFirestore();
 
     return () => {
       if (typeof unsubChapters === 'function') unsubChapters();

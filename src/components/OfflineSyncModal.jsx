@@ -26,7 +26,8 @@ import {
   subscribeToNetworkStatus, 
   subscribeToOfflineQueue,
   getDailyQuotaUsage,
-  subscribeToQuotaUsage
+  subscribeToQuotaUsage,
+  syncMasterDataToFirestore
 } from '../services/firebase';
 
 export default function OfflineSyncModal({ isOpen, onClose }) {
@@ -74,6 +75,33 @@ export default function OfflineSyncModal({ isOpen, onClose }) {
       setSyncFeedback({
         type: 'error',
         message: 'حدث خطأ أثناء محاولة المزامنة، البيانات محفوظة محلياً في أمان تام.'
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleSyncMasterData = async () => {
+    if (isSyncing) return;
+    setIsSyncing(true);
+    setSyncFeedback(null);
+    try {
+      const res = await syncMasterDataToFirestore();
+      if (res.success) {
+        setSyncFeedback({
+          type: 'success',
+          message: `تمت مزامنة واعتماد كافة البيانات الواقعية الرسمية (${res.count} عنصراً) مع سحابة Firebase Firestore بنجاح!`
+        });
+      } else {
+        setSyncFeedback({
+          type: 'warning',
+          message: res.reason || 'تعذر المزامنة السحابية حالياً، يرجى التأكد من اتصال الإنترنت.'
+        });
+      }
+    } catch (e) {
+      setSyncFeedback({
+        type: 'error',
+        message: 'حدث خطأ أثناء مزامنة البيانات الواقعية الشاملة.'
       });
     } finally {
       setIsSyncing(false);
@@ -430,13 +458,28 @@ export default function OfflineSyncModal({ isOpen, onClose }) {
             <span>قاعدة البيانات: Firebase Firestore + IndexedDB Cache</span>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200 shadow-2xs transition-colors cursor-pointer"
-          >
-            إغلاق
-          </button>
+          <div className="flex items-center gap-2">
+            {isOnline && (
+              <button
+                type="button"
+                onClick={handleSyncMasterData}
+                disabled={isSyncing}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+                title="مزامنة واعتماد البيانات الواقعية لجميع الأبواب والمجلدات والفواصل إلى Firebase"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span>مزامنة البيانات الواقعية إلى السحابة</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200 shadow-2xs transition-colors cursor-pointer"
+            >
+              إغلاق
+            </button>
+          </div>
         </div>
 
       </div>
